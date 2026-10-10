@@ -1,0 +1,11 @@
+## **Lector**
+- **Descripción:** 
+  - Empleado básico del departamento administrativo o comercial interno de Turbine.
+- **Función:**
+    - Consultar fechas de emisión, vencimiento y estado de pago o impago de facturas.
+    - Gestionar las fichas y personas de contacto de sus clientes asignados.
+    - Generar, editar y tramitar facturas asociadas a dichos clientes.
+    - Realizar seguimiento de cobros, registrar incidencias y descargar documentos PDF.
+- **Restricciones:**
+    - Acceso limitado exclusivamente a los clientes que un Administrador le haya asignado (o delegado temporalmente).
+    - Sin acceso al dashboard financiero global, configuración general ni modificación de tarifas globales.
