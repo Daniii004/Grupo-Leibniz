@@ -1,11 +1,11 @@
-# 3. Requisitos Funcionales (RF)
+# Requisitos Funcionales (RF)
 
-## 3.1. Gestión de Usuarios, Roles y Asignaciones
+## 1. Gestión de Usuarios, Roles y Asignaciones
 
 * **RF-01. Gestión de usuarios internos:** Alta e invitación de usuarios restringida al dominio de correo corporativo (`@turbine`), sin opción de autorregistro público. Incluye recuperación de contraseña mediante enlace temporal y desactivación lógica de cuentas (cerrando sesiones activas pero conservando el historial de acciones del empleado).
 * **RF-02. Asignación y delegación de clientes:** El Administrador puede asignar clientes específicos a Usuarios Operativos. Ante un cambio de responsable, las tareas pendientes pasan al nuevo usuario asignado conservando la autoría histórica previa. Permite configurar **delegaciones temporales** (con fecha de inicio y fin por vacaciones/bajas) que caducan automáticamente.
 
-## 3.2. Gestión de Clientes y Contactos
+## 2. Gestión de Clientes y Contactos
 
 * **RF-03. Separación de datos comerciales y fiscales:** Almacenamiento diferenciado de datos comerciales (nombre comercial, sector/temática, ubicación, etiquetas personalizadas como *estratégico*, *partner*, *beta*) y datos fiscales (razón social, NIF/identificador fiscal internacional, domicilio fiscal, país e idioma/moneda acordada).
 * **RF-04. Múltiples contactos por cliente:** Asociación de múltiples personas de contacto por empresa según su rol (contratación, administración/recepción de facturas, recobro), permitiendo que un contacto esté vinculado a varias empresas (ej. gestorías externas). Permite desactivar contactos que dejan la empresa manteniendo el registro histórico de envíos pasados y registrar el consentimiento por canal (ej. WhatsApp).
@@ -13,14 +13,14 @@
 * **RF-06. Importación masiva de clientes vía CSV:** Herramienta de carga con mapeo de columnas, vista previa antes de confirmar, validación de formatos y NIFs duplicados, gestión de filas erróneas y registro de resumen de la importación (creados, actualizados, rechazados y motivos).
 * **RF-07. Línea temporal del cliente (Timeline):** Vista cronológica de negocio en la ficha del cliente que resume los eventos clave: fecha de alta, cambios de responsable, revisiones de tarifa, facturas emitidas, cobros, incidencias, pausas y bajas.
 
-## 3.3. Suscripciones (Relaciones Comerciales), Tarifas y Catálogo
+## 3. Suscripciones (Relaciones Comerciales), Tarifas y Catálogo
 
 * **RF-08. Gestión de suscripciones:** Registro del acuerdo comercial mensual que origina la facturación recurrente: fecha de inicio (actual o futura), rango/tarifa asignada, condiciones particulares de pago (ej. vencimiento a 30 días que prevalece sobre el plazo estándar), responsable interno y adjunto de contratos/acuerdos firmados externamente.
 * **RF-09. Pausa y baja de suscripciones:** Capacidad de pausar temporalmente una suscripción registrando motivo, fecha de inicio y fecha prevista de reactivación (avisando al responsable al llegar la fecha). Gestión de solicitudes de baja deteniendo la generación de nuevas mensualidades en la fecha efectiva sin cancelar la persecución de cobros pendientes.
 * **RF-10. Revisión anual de rango tarifario:** Proceso anual que identifica clientes sujetos a revisión, registra su facturación anual verificada (manualmente con referencia documental o vía fuente simulada) y propone el cambio de tramo según la tabla de tarifas vigente. Requiere aprobación explícita de un responsable antes de aplicar la nueva cuota y no altera facturas emitidas con anterioridad.
 * **RF-11. Catálogo ligero de conceptos reutilizables:** Mantenimiento de conceptos frecuentes para facturas puntuales (ej. *Instalación on-premise*, *Consultoría*, *Formación*, *Hardware*) con descripción, precio orientativo e impuesto por defecto modificables al crear la factura.
 
-## 3.4. Presupuestos, Facturación y Ciclo de Vida Documental
+## 4. Presupuestos, Facturación y Ciclo de Vida Documental
 
 * **RF-12. Gestión de presupuestos previos:** Creación, envío y registro de aceptación o rechazo de presupuestos para servicios puntuales, permitiendo convertir un presupuesto aceptado en factura reutilizando sus líneas y manteniendo el vínculo histórico entre ambos documentos.
 * **RF-13. Emisión de facturas puntuales y recurrentes:**
@@ -33,20 +33,20 @@
 * **RF-18. Facturas rectificativas y cierres de periodo:** Bloqueo de edición sobre facturas emitidas o pertenecientes a meses/trimestres marcados como cerrados administrativamente. Flujo guiado para generar facturas rectificativas o notas de crédito vinculadas a la factura original (requiriendo permisos administrativos y recalculando el saldo del cliente).
 * **RF-19. Migración de facturas históricas:** Importación administrativa de facturas pasadas marcadas como *Migradas*, conservando su número y documento original sin enviar notificaciones al cliente ni alterar las series de numeración en curso.
 
-## 3.5. Seguimiento de Cobros, Conciliación e Impagos
+## 5. Seguimiento de Cobros, Conciliación e Impagos
 
 * **RF-20. Integración con pasarela de pagos (Stripe simulado) y conciliación multifuente:** Consulta y recepción de eventos de cobro desde Stripe (simulado) y carga de movimientos de otras fuentes bancarias (Revolut/cuentas bancarias). Conciliación automática cuando exista coincidencia inequívoca de referencia e importe, o propuesta de conciliación manual asistida en caso de duda.
 * **RF-21. Tratamiento de descuadres y reversión de conciliaciones:** Si se recibe un pago inferior o superior al importe de la factura, mantener la factura como *Parcialmente conciliada* o con saldo pendiente de revisión sin darla por saldada automáticamente. Permitir deshacer una conciliación errónea registrando quién la revirtió y el motivo.
 * **RF-22. Envío de factura y flujo automatizado de recordatorios e impagos:** Envío automático del PDF al emitir; envío de recordatorio previo (día 3 por defecto) y aviso en fecha de vencimiento (día 5 por defecto, o según el plazo particular del cliente). Tras el vencimiento, activación del flujo de impago con avisos periódicos (cada 2-3 días configurables) ajustados al calendario laboral/festivos hasta detectar el cobro o intervención manual.
 * **RF-23. Gestión de disputas e incobrables:** Opción para que el responsable marque una factura *En disputa / Seguimiento pausado* (indicando motivo y fecha de revisión), suspendiendo temporalmente los recordatorios al cliente y generando una alerta interna al vencer la pausa. Procedimiento administrativo sujeto a aprobación para declarar una deuda como *Incobrable*.
 
-## 3.6. Comunicaciones, Incidencias y Trabajo Colaborativo
+## 6. Comunicaciones, Incidencias y Trabajo Colaborativo
 
 * **RF-24. Plantillas de comunicación multidioma y control de rebotes:** Gestión de plantillas editables con variables dinámicas en Español e Inglés para envíos por Email y WhatsApp (simulado) según el idioma configurado en el cliente/contacto. Registro detallado de envíos (fecha, canal, destinatario, versión de plantilla, estado). Ante un rebote o fallo de entrega, generación de incidencia interna para corregir el contacto y reintentar sin duplicar la factura. Modo de prueba para simular envíos y previsualizar calendarios de recordatorios.
 * **RF-25. Bandeja de notificaciones internas y alertas configurables:** Alertas en plataforma y por correo (con opción de resumen periódico) para responsables y administradores ante eventos relevantes (cobros, vencimientos, rebotes, disputas, revisiones anuales, aprobaciones o reglas parametrizadas como deuda acumulada > X €), diferenciando entre notificación *Leída* y tarea *Atendida/Resuelta*.
 * **RF-26. Gestión de incidencias internas, comentarios y adjuntos:** Creación de incidencias administrativas asociadas a clientes o facturas (ej. *NIF erróneo*, *reclamación de importe*, *pago no localizado*) con estado, prioridad y responsable. Soporte de comentarios internos con menciones (`@usuario`), notas restringidas solo para administradores y carga de archivos adjuntos clasificados por tipo (presupuestos aceptados, justificantes de pago, órdenes de pedido).
 
-## 3.7. Operativa Diaria, Informes, Configuración y API
+## 7. Operativa Diaria, Informes, Configuración y API
 
 * **RF-27. Pantalla de trabajo diario, búsqueda global y acciones masivas:** Vista principal operativa con acceso directo a tareas pendientes (facturas por vencer/vencidas, cobros por conciliar, errores de entrega, aprobaciones y revisiones anuales). Buscador global (por razón social, nombre comercial, NIF, contacto, correo o nº de factura), filtros guardables, acceso a clientes recientes/favoritos y ejecución controlada de acciones masivas con confirmación y resumen de resultados (ej. reasignar cartera de un empleado).
 * **RF-28. Dashboard financiero, informes y paquete para gestoría:** Panel exclusivo para Administradores con métricas reconciliables (total facturado, cobrado, pendiente, vencido, tiempo medio de cobro, ingresos recurrentes esperados vs. puntuales, ranking de deuda y cumplimiento de objetivos configurables). Exportación filtrada a CSV y PDF respetando permisos de visibilidad, informes programados y generación de paquetes de cierre mensual/trimestral para la gestoría (CSV + PDFs en ZIP) con control de versiones.
