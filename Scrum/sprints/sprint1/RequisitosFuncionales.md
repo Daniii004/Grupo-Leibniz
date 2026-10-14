@@ -2,27 +2,27 @@
 
 ## 1. Gestión de Usuarios, Roles y Asignaciones
 
-* FR1. El sistema permitirá a los administradores registrar a los usuarios.
-* FR1.1. El sistema validará que el correo electrónico pertenezca al dominio corporativo autorizado (@turbine).
+- FR1. El sistema permitirá a los administradores registrar a los usuarios.
+- FR1.1. El sistema validará que el correo electrónico pertenezca al dominio corporativo autorizado (@turbine).
   - Dependencias: FR1
-* FR1.2. El sistema permitirá a los usuarios solicitar el restablecimiento de contraseña mediante un enlace temporal.
+- FR1.2. El sistema permitirá a los usuarios solicitar el restablecimiento de contraseña mediante un enlace temporal.
   - Dependencias: FR1
-* FR1.3. El sistema permitirá a los administradores desactivar cuentas de usuario conservando su historial de acciones.
+- FR1.3. El sistema permitirá a los administradores desactivar cuentas de usuario conservando su historial de acciones.
   - Dependencias: FR1
-* FR1.4. El sistema invalidará automáticamente las sesiones activas de un usuario en el momento de su desactivación.
+- FR1.4. El sistema invalidará automáticamente las sesiones activas de un usuario en el momento de su desactivación.
   - Dependencias: FR1.3
-* FR1.5. El sistema cerrará la sesión del usuario de forma automática tras un periodo de inactividad.
+- FR1.5. El sistema cerrará la sesión del usuario de forma automática tras un periodo de inactividad.
   - Dependencias: FR1
-* FR1.6. El sistema bloqueará temporalmente el acceso tras superar cierto número de intentos fallidos consecutivos de inicio de sesión.
+- FR1.6. El sistema bloqueará temporalmente el acceso tras superar cierto número de intentos fallidos consecutivos de inicio de sesión.
   - Dependencias: FR1
 
-* FR2. El sistema permitirá a los administradores asignar clientes específicos a usuarios operativos.
+- FR2. El sistema permitirá a los administradores asignar clientes específicos a usuarios operativos.
   - Dependencias: FR1
-* FR2.1. El sistema permitirá reasignar un cliente a otro usuario, transfiriendo las tareas pendientes y conservando la autoría del responsable anterior.
+- FR2.1. El sistema permitirá reasignar un cliente a otro usuario, transfiriendo las tareas pendientes y conservando la autoría del responsable anterior.
   - Dependencias: FR2
-* FR2.2. El sistema permitirá asignar temporalmente los clientes de un usuario a otro indicando una fecha de inicio y fin (por ejemplo, por vacaciones o baja médica).
+- FR2.2. El sistema permitirá asignar temporalmente los clientes de un usuario a otro indicando una fecha de inicio y fin (por ejemplo, por vacaciones o baja médica).
   - Dependencias: FR2
-* FR2.3. El sistema retirará automáticamente el acceso temporal al llegar la fecha de fin, devolviendo al cliente a su responsable inicial.
+- FR2.3. El sistema retirará automáticamente el acceso temporal al llegar la fecha de fin, devolviendo al cliente a su responsable inicial.
   - Dependencias: FR2.2
 
 ## 2. Gestión de Clientes y Contactos
