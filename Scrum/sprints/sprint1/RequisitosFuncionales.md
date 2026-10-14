@@ -25,7 +25,6 @@
 ## 2. Gestión de Clientes y Contactos
 
 - **FR3.** El sistema permitirá dar de alta y gestionar clientes diferenciando sus datos comerciales de sus datos fiscales.
-    - *Dependencias:* FR1
   - **FR3.1.** El sistema almacenará por separado los datos comerciales (nombre, sector, ubicación y etiquetas) y fiscales (razón social, NIF, domicilio, país e idioma).
     - *Dependencias:* FR3<br><br>
 - **FR4.** El sistema permitirá guardar varias personas de contacto para cada empresa cliente, indicando su función (por ejemplo: comercial, administración o cobros).
@@ -50,7 +49,6 @@
 ## 3. Suscripciones (Relaciones Comerciales), Tarifas y Catálogo
 
 - **FR8.** El sistema permitirá crear y gestionar suscripciones mensuales para los clientes indicando fecha de inicio, tarifa, condiciones de pago y responsable.
-    - *Dependencias:* FR3
   - **FR8.1.** El sistema permitirá adjuntar los contratos o acuerdos firmados a la ficha de la suscripción.
     - *Dependencias:* FR8<br><br>
 - **FR9.** El sistema permitirá pausar temporalmente una suscripción indicando el motivo y una fecha prevista para reanudarla.
@@ -64,7 +62,6 @@
   - **FR10.1.** El sistema exigirá que un responsable apruebe el nuevo precio antes de aplicarlo, sin modificar las facturas emitidas anteriormente.
     - *Dependencias:* FR10<br><br>
 - **FR11.** El sistema permitirá guardar productos o servicios habituales (como formación, consultoría, instalaciones, etc) con una descripción y precio orientativo.
-    - *Dependencias:* FR1
   - **FR11.1.** El sistema permitirá modificar el precio y los datos de estos servicios al momento de crear una factura.
     - *Dependencias:* FR11
 
