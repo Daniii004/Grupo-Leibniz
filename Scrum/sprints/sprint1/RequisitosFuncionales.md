@@ -2,35 +2,50 @@
 
 ## 1. Gestión de Usuarios, Roles y Asignaciones
 
-- **FR1**. El sistema permitirá a los administradores registrar a los usuarios.
-- **FR1.1**. El sistema validará que el correo electrónico pertenezca al dominio corporativo autorizado (@turbine).
+- **FR1.** El sistema permitirá a los administradores registrar a los usuarios.
+- **FR1.1.** El sistema validará que el correo electrónico pertenezca al dominio corporativo autorizado (@turbine).
   - *Dependencias:* FR1
-- **FR1.2**. El sistema permitirá a los usuarios solicitar el restablecimiento de contraseña mediante un enlace temporal.
+- **FR1.2.** El sistema permitirá a los usuarios solicitar el restablecimiento de contraseña mediante un enlace temporal.
   - *Dependencias:* FR1
-- **FR1.3**. El sistema permitirá a los administradores desactivar cuentas de usuario conservando su historial de acciones.
+- **FR1.3.** El sistema permitirá a los administradores desactivar cuentas de usuario conservando su historial de acciones.
   - *Dependencias:* FR1
-- **FR1.4**. El sistema invalidará automáticamente las sesiones activas de un usuario en el momento de su desactivación.
+- **FR1.4.** El sistema invalidará automáticamente las sesiones activas de un usuario en el momento de su desactivación.
   - *Dependencias:* FR1.3
-- **FR1.5**. El sistema cerrará la sesión del usuario de forma automática tras un periodo de inactividad.
-  - *Dependencias:* FR1
-- **FR1.6**. El sistema bloqueará temporalmente el acceso tras superar cierto número de intentos fallidos consecutivos de inicio de sesión.
+- **FR1.5.** El sistema cerrará la sesión del usuario de forma automática tras un periodo de inactividad.
   - *Dependencias:* FR1<br><br>
-- **FR2**. El sistema permitirá a los administradores asignar clientes específicos a usuarios operativos.
+- **FR2.** El sistema permitirá a los administradores asignar clientes específicos a usuarios disponibles.
   - *Dependencias:* FR1
-- **FR2.1**. El sistema permitirá reasignar un cliente a otro usuario, transfiriendo las tareas pendientes y conservando la autoría del responsable anterior.
+- **FR2.1.** El sistema permitirá reasignar un cliente a otro usuario, transfiriendo las tareas pendientes y conservando la autoría del responsable anterior.
   - *Dependencias:* FR2
-- **FR2.2**. El sistema permitirá asignar temporalmente los clientes de un usuario a otro indicando una fecha de inicio y fin (por ejemplo, por vacaciones o baja médica).
+- **FR2.2.** El sistema permitirá asignar temporalmente los clientes de un usuario a otro indicando una fecha de inicio y fin (por ejemplo, por vacaciones o baja médica).
   - *Dependencias:* FR2
-- **FR2.3**. El sistema retirará automáticamente el acceso temporal al llegar la fecha de fin, devolviendo al cliente a su responsable inicial.
+- **FR2.3.** El sistema retirará automáticamente el acceso temporal al llegar la fecha de fin, devolviendo al cliente a su responsable inicial.
   - *Dependencias:* FR2.2
 
 ## 2. Gestión de Clientes y Contactos
 
-* **RF-03. Separación de datos comerciales y fiscales:** Almacenamiento diferenciado de datos comerciales (nombre comercial, sector/temática, ubicación, etiquetas personalizadas como *estratégico*, *partner*, *beta*) y datos fiscales (razón social, NIF/identificador fiscal internacional, domicilio fiscal, país e idioma/moneda acordada).
-* **RF-04. Múltiples contactos por cliente:** Asociación de múltiples personas de contacto por empresa según su rol (contratación, administración/recepción de facturas, recobro), permitiendo que un contacto esté vinculado a varias empresas (ej. gestorías externas). Permite desactivar contactos que dejan la empresa manteniendo el registro histórico de envíos pasados y registrar el consentimiento por canal (ej. WhatsApp).
-* **RF-05. Ciclo de vida del cliente y control de duplicados:** Gestión de estados del cliente (*Pendiente de activación, Activo, Pausado, Baja solicitada, Inactivo, Bloqueado*). Detección preventiva de duplicados por NIF/ID fiscal al dar de alta o reactivar, e interfaz administrativa auditada para la fusión manual de empresas duplicadas.
-* **RF-06. Importación masiva de clientes vía CSV:** Herramienta de carga con mapeo de columnas, vista previa antes de confirmar, validación de formatos y NIFs duplicados, gestión de filas erróneas y registro de resumen de la importación (creados, actualizados, rechazados y motivos).
-* **RF-07. Línea temporal del cliente (Timeline):** Vista cronológica de negocio en la ficha del cliente que resume los eventos clave: fecha de alta, cambios de responsable, revisiones de tarifa, facturas emitidas, cobros, incidencias, pausas y bajas.
+- **FR3.** El sistema permitirá dar de alta y gestionar clientes diferenciando sus datos comerciales de sus datos fiscales.
+  - *Dependencias:* FR1
+- **FR3.1.** El sistema almacenará por separado los datos comerciales (nombre, sector, ubicación y etiquetas) y fiscales (razón social, NIF, domicilio, país e idioma).
+  - *Dependencias:* FR3<br><br>
+- **FR4.** El sistema permitirá guardar varias personas de contacto para cada empresa cliente, indicando su función (por ejemplo: comercial, administración o cobros).
+  - *Dependencias:* FR3
+- **FR4.1.** El sistema permitirá asignar una misma persona o gestor externo a más de una empresa cliente diferente.
+  - *Dependencias:* FR4<br><br>
+- **FR5.** El sistema controlará el estado de cada cliente (como Activo, Pausado, Baja o Bloqueado) a lo largo de su ciclo de vida.
+  - *Dependencias:* FR3
+- **FR5.1.** El sistema no permitirá registrar o reactivar un cliente si su NIF ya existe en la base de datos para evitar duplicados.
+  - *Dependencias:* FR5
+- **FR5.2.** El sistema permitirá a los administradores fusionar dos clientes duplicados, manteniendo todo su historial unificado.
+  - *Dependencias:* FR5<br><br>
+- **FR6.** El sistema permitirá importar una lista de clientes a la vez mediante un archivo CSV.
+  - *Dependencias:* FR3
+- **FR6.1.** El sistema mostrará una vista previa del archivo para revisar los datos y avisar si algún NIF ya existe antes de guardarlos.
+  - *Dependencias:* FR6
+- **FR6.2.** El sistema mostrará un informe al terminar la subida con los clientes guardados y los que dieron error.
+  - *Dependencias:* FR6<br><br>
+- **FR7.** El sistema mostrará un historial de cada cliente (fecha de alta, facturas, cobros, etc).
+  - *Dependencias:* FR3
 
 ## 3. Suscripciones (Relaciones Comerciales), Tarifas y Catálogo
 
