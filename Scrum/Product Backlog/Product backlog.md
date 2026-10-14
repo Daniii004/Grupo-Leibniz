@@ -1,13 +1,16 @@
-# Porduct Backlog
+# Product Backlog
 
-1. Documento de requisitos
+## 1. Documento de Requisitos
+- **Requisitos de Negocio**
+- **Requisitos de Usuario**
+- **Requisitos Funcionales**
+- **Requisitos No Funcionales**
 
-   * Requisitos de negocio
-   * Requisitos de usuario
-   * Requisitos funcionales
-   * Requisitos no funcionales
-2. Diagrama UML de casos de uso
+## 2. Diagrama UML de Casos de Uso
+- **Identificación de Actores**
+- **Identificación de Casos de Uso y Relaciones**
+- **Codificación en formato PlantUML**
 
-   * Actores
-   * Casos de uso
-3. Especificación de casos de uso
+## 3. Especificación de Casos de Uso
+- **Definición de los casos de uso**
+- **Redacción de flujo y ejemplificación**
