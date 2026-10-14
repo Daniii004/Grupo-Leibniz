@@ -4,7 +4,7 @@
 
 ## Añadir requisitos que faltan
 
-### De negocio
+### De negocio -> Miguel
 
 ### De usuario
 
