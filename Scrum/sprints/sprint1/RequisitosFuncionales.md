@@ -49,10 +49,24 @@
 
 ## 3. Suscripciones (Relaciones Comerciales), Tarifas y Catálogo
 
-* **RF-08. Gestión de suscripciones:** Registro del acuerdo comercial mensual que origina la facturación recurrente: fecha de inicio (actual o futura), rango/tarifa asignada, condiciones particulares de pago (ej. vencimiento a 30 días que prevalece sobre el plazo estándar), responsable interno y adjunto de contratos/acuerdos firmados externamente.
-* **RF-09. Pausa y baja de suscripciones:** Capacidad de pausar temporalmente una suscripción registrando motivo, fecha de inicio y fecha prevista de reactivación (avisando al responsable al llegar la fecha). Gestión de solicitudes de baja deteniendo la generación de nuevas mensualidades en la fecha efectiva sin cancelar la persecución de cobros pendientes.
-* **RF-10. Revisión anual de rango tarifario:** Proceso anual que identifica clientes sujetos a revisión, registra su facturación anual verificada (manualmente con referencia documental o vía fuente simulada) y propone el cambio de tramo según la tabla de tarifas vigente. Requiere aprobación explícita de un responsable antes de aplicar la nueva cuota y no altera facturas emitidas con anterioridad.
-* **RF-11. Catálogo ligero de conceptos reutilizables:** Mantenimiento de conceptos frecuentes para facturas puntuales (ej. *Instalación on-premise*, *Consultoría*, *Formación*, *Hardware*) con descripción, precio orientativo e impuesto por defecto modificables al crear la factura.
+- **FR8.** El sistema permitirá crear y gestionar suscripciones mensuales para los clientes indicando fecha de inicio, tarifa, condiciones de pago y responsable.
+  - *Dependencias:* FR3
+- **FR8.1.** El sistema permitirá adjuntar los contratos o acuerdos firmados a la ficha de la suscripción.
+  - *Dependencias:* FR8<br><br>
+- **FR9.** El sistema permitirá pausar temporalmente una suscripción indicando el motivo y una fecha prevista para reanudarla.
+  - *Dependencias:* FR8
+- **FR9.1.** El sistema avisará al responsable cuando llegue la fecha de reactivar una suscripción en pausa.
+  - *Dependencias:* FR9
+- **FR9.2.** El sistema permitirá dar de baja una suscripción dejando de generar nuevas cuotas sin borrar las deudas o cobros pendientes.
+  - *Dependencias:* FR8<br><br>
+- **FR10.** El sistema gestionará la revisión anual de tarifas proponiendo cambios de precio según la facturación del cliente.
+  - *Dependencias:* FR8
+- **FR10.1.** El sistema exigirá que un responsable apruebe el nuevo precio antes de aplicarlo, sin modificar las facturas emitidas anteriormente.
+  - *Dependencias:* FR10<br><br>
+- **FR11.** El sistema permitirá guardar productos o servicios habituales (como formación, consultoría, instalaciones, etc) con una descripción y precio orientativo.
+  - *Dependencias:* FR1
+- **FR11.1.** El sistema permitirá modificar el precio y los datos de estos servicios al momento de crear una factura.
+  - *Dependencias:* FR11
 
 ## 4. Presupuestos, Facturación y Ciclo de Vida Documental
 
