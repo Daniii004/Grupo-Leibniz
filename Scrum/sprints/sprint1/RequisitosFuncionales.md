@@ -15,7 +15,6 @@
   - Dependencias: FR1
 - FR1.6. El sistema bloqueará temporalmente el acceso tras superar cierto número de intentos fallidos consecutivos de inicio de sesión.
   - Dependencias: FR1
-
 - FR2. El sistema permitirá a los administradores asignar clientes específicos a usuarios operativos.
   - Dependencias: FR1
 - FR2.1. El sistema permitirá reasignar un cliente a otro usuario, transfiriendo las tareas pendientes y conservando la autoría del responsable anterior.
