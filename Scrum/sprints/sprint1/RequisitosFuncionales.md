@@ -96,10 +96,33 @@
 
 ## 7. Operativa Diaria, Informes, Configuración y API
 
-* **RF-27. Pantalla de trabajo diario, búsqueda global y acciones masivas:** Vista principal operativa con acceso directo a tareas pendientes (facturas por vencer/vencidas, cobros por conciliar, errores de entrega, aprobaciones y revisiones anuales). Buscador global (por razón social, nombre comercial, NIF, contacto, correo o nº de factura), filtros guardables, acceso a clientes recientes/favoritos y ejecución controlada de acciones masivas con confirmación y resumen de resultados (ej. reasignar cartera de un empleado).
-* **RF-28. Dashboard financiero, informes y paquete para gestoría:** Panel exclusivo para Administradores con métricas reconciliables (total facturado, cobrado, pendiente, vencido, tiempo medio de cobro, ingresos recurrentes esperados vs. puntuales, ranking de deuda y cumplimiento de objetivos configurables). Exportación filtrada a CSV y PDF respetando permisos de visibilidad, informes programados y generación de paquetes de cierre mensual/trimestral para la gestoría (CSV + PDFs en ZIP) con control de versiones.
-* **RF-29. Configuración global y panel de salud del sistema:** Administración de parámetros del sistema, datos fiscales del emisor (soportando evolución a multiempresa), monedas, tipos de impuestos, series, tablas de tarifas y umbrales. Panel de monitorización con el historial de ejecución de tareas programadas (generador mensual, recordatorios, backups y errores de integración).
-* **RF-30. API externa:** Interfaz programática autenticada y documentada para que otros sistemas de la compañía (como Brain) consulten si un cliente tiene deuda pendiente o notifiquen solicitudes de baja comercial respetando las reglas de negocio.
+* **FR27. Pantalla de trabajo diario y acciones masivas**
+  * **FR27.1.** El sistema mostrará en la vista principal las tareas pendientes asignadas al usuario operativo (facturas próximas a vencer, vencidas, incidencias de entrega y cobros pendientes de conciliar).
+  * **FR27.2.** El sistema permitirá realizar búsquedas globales de clientes y facturas combinando criterios (razón social, NIF, contacto, estado o número de factura).
+  * **FR27.3.** El sistema permitirá a los usuarios guardar filtros de búsqueda recurrentes para consultas frecuentes.
+    * *Dependencias: FR27.2*
+  * **FR27.4.** El sistema ofrecerá una sección de acceso directo a clientes recientes o marcados como favoritos.
+  * **FR27.5.** El sistema permitirá a los administradores ejecutar acciones masivas de reasignación de clientes entre usuarios, solicitando confirmación previa y mostrando un resumen de resultados.
+    * *Dependencias: FR2.1*
+
+* **FR28. Dashboard financiero y paquetes de exportación**
+  * **FR28.1.** El sistema proporcionará a los administradores un panel de control con métricas financieras consolidadas (total facturado, cobrado, pendiente de cobro y saldo vencido).
+  * **FR28.2.** El sistema permitirá desglosar cualquier métrica del panel de control para consultar el listado detallado de las facturas que la originan (*drill-down*).
+    * *Dependencias: FR28.1*
+  * **FR28.3.** El sistema permitirá a los administradores configurar objetivos de facturación mensual y anual para su seguimiento en el panel de control.
+  * **FR28.4.** El sistema permitirá exportar informes y listados en formatos estructurados legibles (CSV) respetando los permisos de acceso del usuario.
+  * **FR28.5.** El sistema registrará en la pista de auditoría interna la fecha, hora, filtros aplicados y usuario que generó cada exportación masiva.
+    * *Dependencias: FR28.4*
+
+* **FR29. Configuración global y panel de salud del sistema**
+  * **FR29.1.** El sistema permitirá a los administradores registrar y modificar los datos fiscales y comerciales de la entidad emisora (razón social, NIF/CIF, domicilio fiscal, país y moneda predeterminada).
+  * **FR29.2.** El sistema permitirá a los administradores configurar umbrales globales de alerta del sistema (por ejemplo, límite de días de gracia antes de escalar un impago o importe máximo permitido antes de requerir aprobación).
+    * *Dependencias: FR29.1*
+
+* **FR30. Servicios e integración externa (API)**
+  * **FR30.1.** El sistema expondrá una interfaz programática segura para consultar el estado de deuda y obligaciones pendientes de un cliente mediante su identificador.
+  * **FR30.2.** El sistema permitirá recibir solicitudes externas de baja comercial a través de la interfaz programática, registrándolas como tareas administrativas sin eliminar el histórico ni saltarse las reglas de cobro de deuda.
+    * *Dependencias: FR30.1*
 
 * Permitir asociar a una persona a varias empresas.
 * Permitir asociar varias personas de contacto a una empresa con sus roles distinguidos dentro de esta misma.
