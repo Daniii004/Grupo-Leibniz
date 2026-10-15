@@ -20,10 +20,8 @@
   - *Dependencias:* FR1.
   - **FR2.1.** El sistema permitirá transferir un cliente a otro usuario, traspasando las tareas pendientes pero conservando las acciones del responsable anterior.
     - *Dependencias:* FR2.
-  - **FR2.2.** El sistema permitirá asignar los clientes de un usuario a otro usuario de forma temporal, indicando las fechas de inicio y fin del periodo (por bajas o vacaciones).
+  - **FR2.2.** El sistema permitirá asignar los clientes de un usuario a otro usuario de forma temporal, indicando las fechas de inicio y fin del periodo (por bajas o vacaciones) y devolverá el cliente a su responsable inicial cuando llegue la fecha de fin.
     - *Dependencias:* FR2.
-  - **FR2.3.** Al llegar la fecha de fin, el sistema retirará el acceso temporal y devolverá el cliente a su responsable inicial.
-    - *Dependencias:* FR2.2.
 
 - **FR2.0.1.** El sistema aplicará un modelo de autorización centralizado basado en roles (superadministrador, administrador y usuario operativo) que determine las acciones permitidas a cada usuario.
   - *Dependencias:* FR1.
@@ -61,11 +59,11 @@
     - *Dependencias:* FR5.
   - **FR5.2.** El sistema permitirá a los administradores fusionar dos clientes duplicados y unificar todo su historial.
     - *Dependencias:* FR5.
-
   - **FR5.3.** El sistema permitirá además los estados *Pendiente de activación* y *Baja solicitada*, y mostrará de forma explícita las consecuencias de cada cambio de estado antes de confirmarlo.
     - *Dependencias:* FR5.
   - **FR5.4.** El sistema bloqueará la activación de la recurrencia de un cliente que no tenga datos fiscales suficientes e indicará qué datos faltan.
     - *Dependencias:* FR5, FR3.1, FR13.2.
+
 - **FR6.** El sistema permitirá importar simultáneamente una lista de clientes mediante un archivo CSV.
   - *Dependencias:* FR3.
   - **FR6.1.** Antes de guardar los datos, el sistema mostrará una vista previa del archivo para revisarlos y avisará si algún NIF ya existe.
@@ -145,12 +143,10 @@
   - *Dependencias:* FR8, FR13.
   - **FR14.1.** Cuando una suscripción comience un día distinto del día 1 (por ejemplo, el día 22), el sistema calculará automáticamente y permitirá previsualizar el importe prorrateado correspondiente a los días restantes del mes.
     - *Dependencias:* FR8, FR13.2.
-  - **FR14.2.** El sistema permitirá aplicar excepciones comerciales autorizadas al prorrateo, como ofrecer el primer mes gratis o iniciar el cobro el mes siguiente.
-    - *Dependencias:* FR14.1.
+  - **FR14.2.** El sistema permitirá aplicar promociones comerciales, como no cobrar el primer mes o empezar a cobrar al mes siguiente.
+    - *Dependencias:* FR14.
   - **FR14.3.** El sistema permitirá aplicar descuentos temporales con fecha de caducidad (por ejemplo, un 10 % durante seis meses) y dejará de aplicarlos automáticamente al vencer.
     - *Dependencias:* FR14.2, FR15.2.
-  - **FR14.4.** El sistema permitirá aplicar promociones comerciales, como no cobrar el primer mes o empezar a cobrar al mes siguiente.
-    - *Dependencias:* FR14.
 
 - **FR15.** El sistema requerirá que un administrador apruebe las facturas que tengan condiciones especiales.
   - *Dependencias:* FR13, FR17.
