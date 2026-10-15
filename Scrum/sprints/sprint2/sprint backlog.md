@@ -6,7 +6,7 @@
 
 ### De negocio -> Miguel
 
-### De usuario
+### De usuario -> Victor
 
 ## Casos de uso - Reparto en 7 grupos como RF (por asignar)
 
