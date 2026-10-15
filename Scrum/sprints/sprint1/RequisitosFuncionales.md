@@ -82,54 +82,46 @@
 
 ## 4. Presupuestos, facturación y ciclo de vida documental
 
-- **FR12.** El sistema permitirá gestionar el ciclo de vida de los presupuestos para servicios puntuales y su conversión en facturas.
+- **FR12.** El sistema permitirá crear presupuestos para servicios puntuales y convertirlos en facturas.
   - *Dependencias:* FR3, FR11, FR13.
-  - **FR12.1.** El sistema permitirá crear y enviar presupuestos para servicios puntuales.
-    - *Dependencias:* FR3, FR11.
-  - **FR12.2.** El sistema permitirá registrar la aceptación o el rechazo de cada presupuesto.
+  - **FR12.1.** El sistema permitirá registrar si un cliente acepta o rechaza un presupuesto.
     - *Dependencias:* FR12.1.
-  - **FR12.3.** El sistema permitirá convertir un presupuesto aceptado en una factura, reutilizando sus líneas y conservando el vínculo histórico entre ambos documentos.
+  - **FR12.2.** El sistema permitirá pasar un presupuesto aceptado directamente a factura sin tener que volver a escribir los datos.
     - *Dependencias:* FR12.2, FR13.
 
 - **FR13.** El sistema permitirá emitir facturas puntuales y recurrentes.
   - *Dependencias:* FR3, FR8, FR11.
-  - **FR13.1.** El sistema permitirá crear facturas puntuales compuestas por una o varias líneas con el concepto, la cantidad, el precio unitario, el descuento y el impuesto aplicable. También permitirá asignarlas, de forma opcional, a un proyecto o centro de coste.
+  - **FR13.1.** El sistema permitirá crear facturas manuales compuestas por una o varias líneas con concepto, cantidad, precio, descuento e IVA.
     - *Dependencias:* FR3, FR11.
-  - **FR13.2.** El sistema generará automáticamente facturas recurrentes el día 1 de cada mes a partir de las suscripciones activas.
+  - **FR13.2.** El sistema generará automáticamente las facturas mensuales el día 1 de cada mes para los clientes con suscripción activa.
     - *Dependencias:* FR8.
 
-- **FR14.** El sistema gestionará el prorrateo de importes cuando una suscripción comience a mitad de mes y permitirá aplicar excepciones comerciales autorizadas.
+- **FR14.** El sistema calculará el importe proporcional si una suscripción empieza a mitad de mes.
   - *Dependencias:* FR8, FR13.
-  - **FR14.1.** Cuando una suscripción comience un día distinto del día 1 (por ejemplo, el día 22), el sistema calculará automáticamente y permitirá previsualizar el importe prorrateado correspondiente a los días restantes del mes.
-    - *Dependencias:* FR8, FR13.2.
-  - **FR14.2.** El sistema permitirá aplicar excepciones comerciales autorizadas al prorrateo, como ofrecer el primer mes gratis o iniciar el cobro el mes siguiente.
-    - *Dependencias:* FR14.1.
+  - **FR14.1.** El sistema permitirá aplicar promociones comerciales, como no cobrar el primer mes o empezar a cobrar al mes siguiente.
+    - *Dependencias:* FR14.
 
-- **FR15.** El sistema gestionará el flujo de aprobación de las facturas que no cumplan las condiciones de emisión directa.
+- **FR15.** El sistema requerirá que un administrador apruebe las facturas que tengan condiciones especiales.
   - *Dependencias:* FR13, FR17.
-  - **FR15.1.** El sistema emitirá directamente las facturas recurrentes estándar.
-    - *Dependencias:* FR13.2.
-  - **FR15.2.** El sistema establecerá el estado *Pendiente de aprobación* para las facturas que incluyan descuentos manuales, modificaciones de la fecha de vencimiento o importes puntuales que superen los umbrales configurados.
+  - **FR15.1.** Las facturas con descuentos manuales, cambios en la fecha de pago o importes muy altos quedarán en estado *Pendiente de aprobación*.
     - *Dependencias:* FR13, FR29.2.
-  - **FR15.3.** El sistema exigirá que un administrador o superadministrador valide las facturas pendientes de aprobación y evitará que quien solicite una operación sensible pueda aprobarla.
-    - *Dependencias:* FR15.2, FR1.
+  - **FR15.2.** El usuario que cree o modifique una factura con condiciones especiales no podrá autoaprobarla.
+    - *Dependencias:* FR15
 
 - **FR16.** El sistema validará los datos y mostrará una vista previa antes de emitir una factura.
   - *Dependencias:* FR3, FR7, FR13, FR29.1.
-  - **FR16.1.** El sistema mostrará obligatoriamente una vista previa de la factura antes de emitirla.
-    - *Dependencias:* FR13.
-  - **FR16.2.** El sistema bloqueará la emisión si faltan datos fiscales obligatorios del cliente o de la entidad emisora.
+  - **FR16.1.** El sistema no permitirá emitir la factura si faltan datos fiscales obligatorios de la empresa o del cliente.
     - *Dependencias:* FR3, FR29.1.
-  - **FR16.3.** El sistema mostrará una alerta preventiva, sin bloquear la emisión, cuando el importe total de una factura resulte anómalo en comparación con el historial del cliente.
+  - **FR16.2.** El sistema mostrará un aviso si el total de la factura es mucho más alto o más bajo de lo habitual en ese cliente.
     - *Dependencias:* FR7, FR13.
 
 - **FR17.** El sistema gestionará los estados, la numeración y la documentación de las facturas emitidas.
   - *Dependencias:* FR13.
   - **FR17.1.** El sistema gestionará los siguientes estados de factura: *Borrador, Pendiente de aprobación, Aprobada, Emitida, Enviada, En disputa, Vencida, Parcialmente conciliada, Pagada, Anulada, Incobrable* y *Rectificada*.
     - *Dependencias:* FR13.
-  - **FR17.2.** El sistema asignará de forma segura una serie y un número correlativo único en el momento de la emisión. Los borradores no consumirán numeración definitiva.
+  - **FR17.2.** El sistema asignará de forma segura una serie y un número correlativo único solo cuando la factura se emita (los borradores no gastan número).
     - *Dependencias:* FR13.
-  - **FR17.3.** El sistema generará un archivo PDF corporativo de cada factura en el momento de su emisión.
+  - **FR17.3.** El sistema generará automáticamente la factura en formato PDF al emitirse.
     - *Dependencias:* FR17.2.
   - **FR17.4.** El sistema conservará una copia inalterable de la factura tal como se emitió, junto con la fecha de generación, el cliente al que corresponde, la persona que la generó y los destinatarios a quienes se envió.
     - *Dependencias:* FR17.2, FR17.3, FR4.
@@ -138,28 +130,28 @@
   - *Dependencias:* FR17.
   - **FR18.1.** El sistema bloqueará la edición de las facturas emitidas y de aquellas que pertenezcan a meses o trimestres cerrados administrativamente.
     - *Dependencias:* FR17.1, FR17.2.
-  - **FR18.2.** El sistema ofrecerá un flujo guiado para generar facturas rectificativas o notas de crédito vinculadas a la factura original. Esta operación requerirá permisos administrativos y recalculará el saldo del cliente.
+  - **FR18.2.** El sistema permitirá emitir facturas rectificativas vinculadas a la original para corregir importes y actualizar la deuda del cliente.
     - *Dependencias:* FR17.1, FR20, FR21.
 
-- **FR19.** El sistema permitirá migrar facturas históricas sin alterar el proceso de facturación en curso.
+- **FR19.** El sistema permitirá subir facturas antiguas de otros años como historial.
   - *Dependencias:* FR17.
-  - **FR19.1.** El sistema permitirá importar administrativamente facturas anteriores marcadas como *Migradas*, conservando su número y el documento original, sin enviar notificaciones al cliente ni alterar las series de numeración en curso.
+  - **FR19.1.** El sistema permitirá guardar facturas antiguas con la etiqueta *Migradas*, conservando su número y el documento original, sin enviar notificaciones al cliente ni alterar las series de numeración en curso.
     - *Dependencias:* FR17.2, FR17.4.
 
 ## 5. Seguimiento de cobros, conciliación e impagos
 
-- **FR20.** El sistema permitirá registrar cobros procedentes de distintas fuentes y conciliar los pagos con las facturas.
+- **FR20.** El sistema permitirá registrar los cobros y comprobar qué facturas han sido pagadas.
   - *Dependencias:* FR17.
   - **FR20.1.** El sistema permitirá consultar y recibir eventos de cobro de Stripe (simulado) y cargar movimientos procedentes de otras fuentes, como Revolut u otras cuentas bancarias.
     - *Dependencias:* FR17.1.
-  - **FR20.2.** El sistema conciliará automáticamente los pagos cuando exista una coincidencia inequívoca entre la referencia y el importe. Si hay dudas, propondrá una conciliación manual asistida.
+  - **FR20.2.** El sistema marcará como pagada una factura cuando el importe y la referencia del cobro coincidan exactamente.
     - *Dependencias:* FR20.1, FR17.1.
 
-- **FR21.** El sistema permitirá gestionar los descuadres de pagos y revertir conciliaciones erróneas.
+- **FR21.** El sistema gestionará pagos incompletos o errores al registrar cobros.
   - *Dependencias:* FR20.
-  - **FR21.1.** Si el pago recibido es inferior o superior al importe de la factura, el sistema mantendrá la factura como *Parcialmente conciliada* o con el saldo pendiente de revisión, sin darla por saldada automáticamente.
+  - **FR21.1.** Si un cliente paga de más o de menos, la factura quedará como *Parcialmente pagada* indicando la cantidad que falta por cobrar.
     - *Dependencias:* FR17.1, FR20.2.
-  - **FR21.2.** El sistema permitirá deshacer una conciliación errónea y registrará quién la revirtió y el motivo.
+  - **FR21.2.** El sistema permitirá anular un cobro asociado por error a una factura, dejando registrado quién lo hizo y el motivo.
     - *Dependencias:* FR20.2.
 
 - **FR22.** El sistema automatizará el envío de facturas por correo electrónico, los recordatorios de pago y los avisos de impago.
@@ -173,7 +165,7 @@
   - **FR22.4.** El sistema permitirá programar el envío periódico por correo electrónico del PDF de la factura a los destinatarios correspondientes.
     - *Dependencias:* FR17.3, FR17.4, FR24.1.
 
-- **FR23.** El sistema permitirá gestionar las facturas en disputa y las deudas declaradas incobrables.
+- **FR23.** El sistema permitirá gestionar reclamaciones de clientes y deudas que no se van a poder cobrar.
   - *Dependencias:* FR17.1, FR22.
   - **FR23.1.** El sistema permitirá que la persona responsable marque una factura como *En disputa* o *Seguimiento pausado*, indicando el motivo y la fecha de revisión.
     - *Dependencias:* FR17.1.
@@ -186,16 +178,16 @@
 
 - **FR24.** El sistema gestionará las plantillas de comunicación, el registro de envíos y los errores de entrega.
   - *Dependencias:* FR3, FR4.
-  - **FR24.1.** El sistema permitirá gestionar plantillas editables con variables dinámicas en español e inglés para los envíos por correo electrónico y WhatsApp (simulado), según el idioma configurado para el cliente o la persona de contacto.
+  - **FR24.1.** El sistema dispondrá de plantillas editables en español e inglés que rellenan automáticamente los datos del cliente y de la factura.
     - *Dependencias:* FR3, FR4.
-  - **FR24.2.** El sistema registrará cada envío, incluidos la fecha, el canal, el destinatario, la versión de la plantilla y el estado.
+  - **FR24.2.** El sistema registrará cada envío con la fecha, el canal, el destinatario, la versión de la plantilla y el estado.
     - *Dependencias:* FR24.1.
   - **FR24.3.** Si se produce un rebote o un fallo de entrega, el sistema generará una incidencia interna para corregir los datos de contacto y permitir un nuevo intento de envío sin duplicar la factura.
     - *Dependencias:* FR24.2, FR26.1.
   - **FR24.4.** El sistema ofrecerá un modo de prueba para simular envíos y previsualizar los calendarios de recordatorios.
     - *Dependencias:* FR22.2, FR22.3, FR24.1.
 
-- **FR25.** El sistema gestionará las notificaciones internas y las alertas configurables para responsables y administradores.
+- **FR25.** El sistema enviará avisos internos a los empleados sobre eventos importantes de su trabajo.
   - *Dependencias:* FR10, FR15, FR20, FR22, FR23, FR24.
   - **FR25.1.** El sistema enviará alertas a través de la plataforma y por correo electrónico, con opción de recibir resúmenes periódicos, ante eventos relevantes como cobros, vencimientos, rebotes, disputas, revisiones anuales, aprobaciones o reglas parametrizadas (por ejemplo, una deuda acumulada superior a X €).
     - *Dependencias:* FR10, FR15, FR20, FR22, FR23, FR24.
