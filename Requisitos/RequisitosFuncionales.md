@@ -124,9 +124,9 @@
 - **FR13.** El sistema permitirá crear presupuestos para servicios puntuales y convertirlos en facturas.
   - *Dependencias:* FR4, FR12, FR14.
   - **FR13.1.** El sistema permitirá registrar si un cliente acepta o rechaza un presupuesto.
-    - *Dependencias:* FR13.1.
+    - *Dependencias:* FR13.
   - **FR13.2.** El sistema permitirá pasar un presupuesto aceptado directamente a factura sin tener que volver a escribir los datos.
-    - *Dependencias:* FR13.2, FR14.
+    - *Dependencias:* FR13.1, FR14.
   - **FR13.3.** El sistema permitirá adjuntar al presupuesto la evidencia de su aceptación, sin exigir la firma del cliente dentro de la plataforma.
     - *Dependencias:* FR13.2.
 
@@ -159,9 +159,7 @@
   - **FR16.4.** El sistema permitirá a un administrador reasignar una aprobación o designar un suplente cuando el aprobador no esté disponible, registrando la reasignación.
     - *Dependencias:* FR16.3.
   - **FR16.5.** El sistema exigirá la aprobación del superadministrador cuando un descuento supere el umbral configurado, y las operaciones que requieran separación de funciones serán configurables.
-    - *Dependencias:* FR16.3, FR30.2.
-  - **FR16.6.** El usuario que cree o modifique una factura con condiciones especiales no podrá autoaprobarla.
-    - *Dependencias:* FR16
+    - *Dependencias:* FR16.2, FR30.2.
 
 - **FR17.** El sistema validará los datos y mostrará una vista previa antes de emitir una factura.
   - *Dependencias:* FR4, FR8, FR14, FR30.1.
@@ -194,7 +192,7 @@
   - **FR19.5.** El sistema exigirá un permiso superior y un motivo para reabrir un periodo cerrado, y registrará la operación.
     - *Dependencias:* FR19.4.
   - **FR19.6.** El sistema exigirá la aprobación de las facturas rectificativas en función de su importe.
-    - *Dependencias:* FR19.2, FR16.3.
+    - *Dependencias:* FR19.2, FR16.2.
 
 - **FR20.** El sistema permitirá subir facturas antiguas de otros años como historial.
   - *Dependencias:* FR18.
