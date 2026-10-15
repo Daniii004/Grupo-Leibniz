@@ -26,11 +26,9 @@
 - **FR3.** El sistema aplicará un modelo de autorización centralizado basado en roles (superadministrador, administrador y usuario operativo) que determine las acciones permitidas a cada usuario.
   - *Dependencias:* FR1.
   - **FR3.1.** El sistema restringirá al usuario operativo a los clientes que tenga asignados, permitiéndole consultar y modificar su información operativa, crear facturas si su permiso lo permite, seguir los cobros y descargar documentos.
-    - *Dependencias:* FR2, FR32.
+    - *Dependencias:* FR2.
   - **FR3.2.** El sistema impedirá que un usuario operativo se asigne clientes a sí mismo, modifique tarifas globales, cree series de facturación o consulte el panel de control financiero global.
-    - *Dependencias:* FR32.1.
   - **FR3.3.** El sistema reservará al superadministrador la configuración global profunda (series de facturación, tarifas, plazos y reglas de automatización) y las acciones administrativas de mayor impacto.
-    - *Dependencias:* FR32.
 
 ## 2. Gestión de clientes y contactos
 
@@ -282,7 +280,7 @@
 
 ## 7. Operativa diaria, informes, configuración y API
 
-- **FR28. Pantalla de trabajo diario y acciones masivas.**
+- **FR28. Pantalla de trabajo diario y acciones masivas:** Proporciona un entorno de trabajo centralizado para gestionar tareas diarias, agilizar la localización de información mediante búsquedas y filtros, y ejecutar operaciones en lote sobre los clientes de forma segura.
   - **FR28.1.** El sistema mostrará en la vista principal las tareas pendientes asignadas al usuario responsable de la operativa, como facturas próximas a vencer o vencidas, incidencias de entrega y cobros pendientes de conciliar.
   - **FR28.2.** El sistema permitirá realizar búsquedas globales de clientes y facturas combinando criterios como la razón social, el NIF, el contacto, el estado o el número de factura.
   - **FR28.3.** El sistema permitirá a los usuarios guardar filtros de búsqueda recurrentes para consultas frecuentes.
@@ -295,7 +293,7 @@
   - **FR28.7.** El sistema permitirá otras acciones masivas (como exportar una selección o cambiar el sector de varias empresas), mostrará el número de elementos afectados, solicitará confirmación cuando la acción sea sensible y no permitirá marcar facturas como pagadas de forma masiva.
     - *Dependencias:* FR28.5.
 
-- **FR29. Panel de control financiero y paquetes de exportación.**
+- **FR29. Panel de control financiero y paquetes de exportación:** Ofrece a los administradores una visión global y detallada del estado económico de la empresa, facilitando el seguimiento de objetivos y la extracción auditada de datos contables para la gestoría.
   - **FR29.1.** El sistema proporcionará a los administradores un panel de control con métricas financieras consolidadas: total facturado, total cobrado, importe pendiente de cobro y saldo vencido.
   - **FR29.2.** El sistema permitirá desglosar cualquier métrica del panel de control para consultar el listado detallado de las facturas que la componen (*drill-down*).
     - *Dependencias:* FR29.1.
@@ -318,7 +316,7 @@
   - **FR29.12.** Como ampliación, el sistema permitirá convertir los importes a una moneda base con un tipo de cambio registrado exclusivamente para informes, sin alterar el importe legal de la factura.
     - *Dependencias:* FR29.1, FR4.2.
 
-- **FR30. Configuración global y panel de estado del sistema.**
+- **FR30. Configuración global y panel de estado del sistema:** Permite definir los parámetros base y datos fiscales de la entidad emisora, así como establecer las reglas operativas, calendarios y umbrales que rigen el comportamiento de la aplicación.
   - **FR30.1.** El sistema permitirá a los administradores registrar y modificar los datos fiscales y comerciales de la entidad emisora (razón social, NIF/CIF, domicilio fiscal, país y moneda predeterminada).
   - **FR30.2.** El sistema permitirá a los administradores configurar umbrales globales de alerta, como el número máximo de días de gracia antes de escalar un impago o el importe a partir del cual se requiere aprobación.
     - *Dependencias:* FR30.1.
@@ -329,7 +327,7 @@
   - **FR30.5.** Como ampliación, el sistema podrá gestionar más de una entidad emisora, cada una con sus series y cuentas, y permitirá a un usuario con permiso seleccionar cuál corresponde.
     - *Dependencias:* FR30.1.
 
-- **FR31. Servicios e integración externa (API).**
+- **FR31. Servicios e integración externa (API):** Expone puntos de entrada programáticos seguros para comunicar el sistema de facturación con herramientas externas, permitiendo verificar deudas y procesar automatizaciones de forma controlada.
   - **FR31.1.** El sistema expondrá una interfaz programática segura para consultar, mediante el identificador de un cliente, el estado de su deuda y sus obligaciones pendientes.
   - **FR31.2.** El sistema permitirá recibir solicitudes externas de baja comercial a través de la interfaz programática y registrarlas como tareas administrativas, sin eliminar el historial ni eludir las reglas de cobro de deudas.
     - *Dependencias:* FR31.1.
@@ -338,13 +336,13 @@
   - **FR31.4.** El sistema documentará el contrato de la interfaz programática y evitará que esta permita eludir las reglas que aplica la interfaz de usuario.
     - *Dependencias:* FR31.1, FR31.2.
 
-- **FR32. Monitorización y procesos automáticos.**
+- **FR32. Monitorización y procesos automáticos:** Controla y registra la ejecución en segundo plano de tareas automatizadas, ofreciendo una vista clara del estado y los errores sin interrumpir la operatividad del usuario.
   - **FR32.1.** El sistema registrará la ejecución de cada proceso automático (generación mensual, recordatorios, conciliación e informes programados), indicando cuántos elementos procesó, cuáles fallaron y el motivo, sin interrumpir el procesamiento del resto.
   - **FR32.2.** El sistema ofrecerá una pantalla de estado con la última ejecución de la generación recurrente, la cola de correos pendientes, los errores recientes de integración y la última copia de seguridad correcta.
     - *Dependencias:* FR32.1.
   - **FR32.3.** El sistema mostrará el estado (*pendiente*, *procesando* o *completado con errores*) de las tareas en segundo plano, que seguirán existiendo aunque el usuario cierre la página.
 
-- **FR33. Auditoría y protección de datos personales.**
+- **FR33. Auditoría y protección de datos personales:** Garantiza el cumplimiento normativo, la privacidad y la trazabilidad mediante el registro inmutable de operaciones sensibles y la gestión legal de los datos.
   - **FR33.1.** El sistema permitirá al superadministrador consultar y filtrar el registro de auditoría de las operaciones sensibles, sin permitir su modificación.
   - **FR33.2.** El sistema permitirá localizar los datos personales de una persona de contacto y anonimizarlos en las fichas operativas cuando proceda, sin invalidar las facturas históricas emitidas.
     - *Dependencias:* FR5.3, FR18.4.
