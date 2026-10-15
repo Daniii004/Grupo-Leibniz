@@ -2,25 +2,25 @@
 
 ## 1. Gestión de usuarios, roles y asignaciones
 
-- **FR1.** El sistema permitirá a los administradores registrar usuarios.
-  - **FR1.1.** El sistema validará que la dirección de correo electrónico pertenezca al dominio corporativo autorizado (`@turbine`).
+- **FR1.** El sistema permitirá que los administradores puedan registrar las cuentas de los usuarios.
+  - **FR1.1.** El sistema comprobará que el correo electrónico introducido pertenezca al dominio de la empresa (`@turbine`).
     - *Dependencias:* FR1.
-  - **FR1.2.** El sistema permitirá a los usuarios solicitar el restablecimiento de su contraseña mediante un enlace temporal.
+  - **FR1.2.** El sistema permitirá que los usuarios soliciten el restablecimiento de su contraseña mediante un enlace temporal.
     - *Dependencias:* FR1.
-  - **FR1.3.** El sistema permitirá a los administradores desactivar cuentas de usuario, conservando el historial de acciones.
+  - **FR1.3.** El sistema permitirá a los administradores desactivar cuentas de usuario sin perder el registro de lo que haya hecho previamente
     - *Dependencias:* FR1.
-  - **FR1.4.** El sistema invalidará automáticamente las sesiones activas de un usuario en el momento de desactivar su cuenta.
+  - **FR1.4.** El sistema cerrará automáticamente las sesiones activas de un usuario al momento de desactivar su cuenta.
     - *Dependencias:* FR1.3.
-  - **FR1.5.** El sistema cerrará automáticamente la sesión del usuario tras un periodo de inactividad.
+  - **FR1.5.** El sistema cerrará automáticamente la sesión de un usuario tras un periodo de inactividad.
     - *Dependencias:* FR1.
 
-- **FR2.** El sistema permitirá a los administradores asignar clientes específicos a usuarios disponibles.
+- **FR2.** El sistema permitirá a los administradores repartir clientes a los usuarios que estén disponibles.
   - *Dependencias:* FR1.
-  - **FR2.1.** El sistema permitirá reasignar un cliente a otro usuario, transfiriendo las tareas pendientes y conservando la autoría de las acciones del responsable anterior.
+  - **FR2.1.** El sistema permitirá transferir un cliente a otro usuario, traspasando las tareas pendientes pero conservando las acciones del responsable anterior.
     - *Dependencias:* FR2.
-  - **FR2.2.** El sistema permitirá asignar temporalmente a otro usuario los clientes de un usuario, indicando las fechas de inicio y fin del periodo (por ejemplo, durante las vacaciones o una baja médica).
+  - **FR2.2.** El sistema permitirá asignar los clientes de un usuario a otro usuario de forma temporal, indicando las fechas de inicio y fin del periodo (por bajas o vacaciones).
     - *Dependencias:* FR2.
-  - **FR2.3.** Al llegar la fecha de fin, el sistema retirará automáticamente el acceso temporal y devolverá el cliente a su responsable inicial.
+  - **FR2.3.** Al llegar la fecha de fin, el sistema retirará el acceso temporal y devolverá el cliente a su responsable inicial.
     - *Dependencias:* FR2.2.
 
 ## 2. Gestión de clientes y contactos
@@ -45,7 +45,7 @@
   - **FR5.2.** El sistema permitirá a los administradores fusionar dos clientes duplicados y unificar todo su historial.
     - *Dependencias:* FR5.
 
-- **FR6.** El sistema permitirá importar simultáneamente una lista de clientes mediante un archivo CSV.
+- **FR6.** El sistema permitirá importar una lista de clientes simultáneos mediante un archivo CSV.
   - *Dependencias:* FR3.
   - **FR6.1.** Antes de guardar los datos, el sistema mostrará una vista previa del archivo para revisarlos y avisará si algún NIF ya existe.
     - *Dependencias:* FR6.
@@ -57,27 +57,27 @@
 
 ## 3. Suscripciones (relaciones comerciales), tarifas y catálogo
 
-- **FR8.** El sistema permitirá crear y gestionar suscripciones mensuales para los clientes, indicando la fecha de inicio, la tarifa acordada, las condiciones de pago y la persona responsable.
+- **FR8.** El sistema permitirá formalizar y gestionar acuerdos de cobro mensual con los clientes, indicando el día de inicio, cuota o tarifa pactada, plazo de cobro y gestor responsable.
   - *Dependencias:* FR3.
-  - **FR8.1.** El sistema permitirá adjuntar los contratos o acuerdos firmados a la ficha de cada suscripción.
+  - **FR8.1.** El sistema permitirá subir copias de los contratos o acuerdos firmados a la ficha de cada suscripción.
     - *Dependencias:* FR8.
-  - **FR8.2.** El sistema almacenará para cada cliente la fecha de inicio, el servicio o plan contratado y la tarifa acordada.
+  - **FR8.2.** El sistema guardará para cada cliente la fecha del inicio de la suscripción, el servicio o plan contratado y el importe acordado.
     - *Dependencias:* FR8.
 
-- **FR9.** El sistema permitirá pausar temporalmente una suscripción e indicar el motivo y la fecha prevista para reanudarla.
+- **FR9.** El sistema permitirá poner en pausa temporal una suscripción, indicando el motivo y la fecha prevista de reactivación.
   - *Dependencias:* FR8.
-  - **FR9.1.** El sistema avisará a la persona responsable cuando llegue la fecha prevista para reactivar una suscripción en pausa.
+  - **FR9.1.** El sistema avisará al responsable asignado cuando llegue la fecha prevista para reanudar una suscripción pausada.
     - *Dependencias:* FR9.
-  - **FR9.2.** El sistema permitirá dar de baja una suscripción, dejando de generar nuevas cuotas sin eliminar las deudas ni los cobros pendientes.
+  - **FR9.2.** El sistema permitirá dar de baja una suscripción, dejando de generar nuevos recibos, manteniendo las deudas o los cobros que queden pendientes.
     - *Dependencias:* FR8.
 
-- **FR10.** El sistema gestionará la revisión anual de las tarifas y propondrá cambios de precio según la facturación del cliente.
+- **FR10.** El sistema gestionará el proceso anual de revisión de tarifas, calculando y sugiriendo ajustes de precio según la facturación del cliente.
   - *Dependencias:* FR8.
-  - **FR10.1.** El sistema exigirá que una persona responsable apruebe el nuevo precio antes de aplicarlo y garantizará que no se modifiquen las facturas emitidas anteriormente.
+  - **FR10.1.** El sistema exigirá que algún responsable apruebe el cambio del precio antes de aplicarlo, garantizando que no se modifiquen las facturas ya emitidas.
     - *Dependencias:* FR10.
 
-- **FR11.** El sistema permitirá guardar productos o servicios habituales (como formación, consultoría o instalaciones) con una descripción y un precio orientativo.
-  - **FR11.1.** El sistema permitirá modificar el precio y los datos de estos productos o servicios al crear una factura.
+- **FR11.** El sistema permitirá crear una lista de conceptos (como formación, consultoría o instalaciones) con una descripción básica y un precio de referencia.
+  - **FR11.1.** El sistema permitirá modificar el precio y los datos de estos conceptos en el momento de añadirlos a una factura.
     - *Dependencias:* FR11.
 
 ## 4. Presupuestos, facturación y ciclo de vida documental
