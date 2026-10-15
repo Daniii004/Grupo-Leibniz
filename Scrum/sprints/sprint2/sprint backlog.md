@@ -4,22 +4,24 @@
 
 ## Añadir requisitos que faltan
 
-### De negocio -> Miguel
+### De negocio -> Juanma
 
 ### De usuario -> Victor
 
-## Casos de uso - Reparto en 7 grupos como RF (por asignar)
+## Cambiar formato requisitos no funcinales a formato plantilla proporcionada -> Javi
 
-### 1. Gestión de Usuarios, Roles y Asignaciones
+## Casos de uso - Reparto en 7 grupos como RF
 
-### 2. Gestión de Clientes y Contactos
+### 1. Gestión de Usuarios, Roles y Asignaciones -> Victor
 
-### 3. Suscripciones (Relaciones Comerciales), Tarifas y Catálogo
+### 2. Gestión de Clientes y Contactos -> Victor
 
-### 4. Presupuestos, Facturación y Ciclo de Vida Documental
+### 3. Suscripciones (Relaciones Comerciales), Tarifas y Catálogo -> Juanma
 
-### 5. Seguimiento de Cobros, Conciliación e Impagos
+### 4. Presupuestos, Facturación y Ciclo de Vida Documental -> Miguel
 
-### 6. Comunicaciones, Incidencias y Trabajo Colaborativo
+### 5. Seguimiento de Cobros, Conciliación e Impagos -> Javi
 
-### 7. Operativa Diaria, Informes, Configuración y API
+### 6. Comunicaciones, Incidencias y Trabajo Colaborativo -> Oscar
+
+### 7. Operativa Diaria, Informes, Configuración y API -> Dani
