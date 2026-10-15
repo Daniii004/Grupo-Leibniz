@@ -127,7 +127,7 @@
     - *Dependencias:* FR13.1.
   - **FR13.2.** El sistema permitirá pasar un presupuesto aceptado directamente a factura sin tener que volver a escribir los datos.
     - *Dependencias:* FR13.2, FR14.
-  - **FR13.4.** El sistema permitirá adjuntar al presupuesto la evidencia de su aceptación, sin exigir la firma del cliente dentro de la plataforma.
+  - **FR13.3.** El sistema permitirá adjuntar al presupuesto la evidencia de su aceptación, sin exigir la firma del cliente dentro de la plataforma.
     - *Dependencias:* FR13.2.
 
 - **FR14.** El sistema permitirá emitir facturas puntuales y recurrentes.
@@ -153,9 +153,9 @@
   - **FR16.1.** Las facturas con descuentos manuales, cambios en la fecha de pago o importes muy altos quedarán en estado *Pendiente de aprobación*.
     - *Dependencias:* FR14, FR30.2.
   - **FR16.2.** El sistema exigirá que un administrador o superadministrador valide las facturas pendientes de aprobación y evitará que quien solicite una operación sensible pueda aprobarla.
-    - *Dependencias:* FR16.2, FR1.
+    - *Dependencias:* FR16.1, FR1.
   - **FR16.3.** El sistema ofrecerá una bandeja de aprobaciones en la que el solicitante consulte el estado de su solicitud (*pendiente*, *aprobada* o *rechazada*) y el comentario del aprobador, y que explique el motivo por el que cada factura quedó pendiente.
-    - *Dependencias:* FR16.2, FR16.3.
+    - *Dependencias:* FR16.2.
   - **FR16.4.** El sistema permitirá a un administrador reasignar una aprobación o designar un suplente cuando el aprobador no esté disponible, registrando la reasignación.
     - *Dependencias:* FR16.3.
   - **FR16.5.** El sistema exigirá la aprobación del superadministrador cuando un descuento supere el umbral configurado, y las operaciones que requieran separación de funciones serán configurables.
