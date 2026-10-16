@@ -1,0 +1,60 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #F8FAFC
+    BorderColor #334155
+    ArrowColor #475569
+}
+
+' Actores Humanos Internos
+actor "Usuario Operativo\n(Responsable)" as Operativo
+actor "Administrador" as Admin
+actor "Superadministrador\n/ Aprobador" as SuperAdmin
+
+' Relaciones de herencia entre roles internos
+Operativo <|-- Admin
+Admin <|-- SuperAdmin
+
+' Actores Externos / Sistémicos
+actor "Pasarela Stripe\n(Simulada)" as Stripe <<Sistema Externo>>
+actor "Temporizador\n(Scheduler)" as Timer <<Sistema>>
+actor "Servicio de Correo\n(Email)" as Email <<Sistema Externo>>
+
+rectangle "Sistema Interno de Facturación y Cobros (Turbine) - Bloque 5: Cobros, Conciliación e Impagos" {
+
+    ' Casos de Uso Principales (Nivel Objetivo de Usuario)
+    usecase "CU-501: Procesar y Conciliar\nCobros Entrantes\n(FR21.1, FR21.2, FR21.3, FR21.4)" as CU501
+    usecase "CU-502: Gestionar Conciliación Manual\ny Reversión de Cobros\n(FR21.3, FR21.4, FR22.2)" as CU502
+    usecase "CU-503: Ejecutar Comunicaciones de Factura\ny Seguimiento de Impagos\n(FR23.1, FR23.2, FR23.3, FR23.4)" as CU503
+    usecase "CU-504: Gestionar Disputa y Pausa\nde Seguimiento de Factura\n(FR24.1, FR24.2)" as CU504
+    usecase "CU-505: Tramitar Declaración\nde Deuda Incobrable\n(FR24.3)" as CU505
+
+    ' Subfunciones / Casos de Extensión para visibilizar requisitos específicos del bloque
+    usecase "Registrar Pago Parcial\no Excedente (FR22.1)" as ExtParcial
+    usecase "Anular Cobro Asociado\npor Error (FR22.2)" as ExtAnular
+    usecase "Programar Envío Periódico\nde PDF (FR23.4)" as SubProgramar
+
+    ' Relaciones <<extend>> e <<include>>
+    CU501 <.. ExtParcial : <<extend>>\n[importe != total factura]
+    CU502 <.. ExtParcial : <<extend>>\n[importe != total factura]
+    CU502 <.. ExtAnular : <<extend>>\n[error en cobro asociado]
+    CU503 <.. SubProgramar : <<extend>>\n[envío periódico configurado]
+}
+
+' Conexiones Actores -> Casos de Uso
+Stripe --> CU501 : Notifica evento\nde cobro
+Admin --> CU501 : Carga movimientos\n(Revolut / Banco)
+
+Operativo --> CU502 : Concilia o revierte\n(clientes asignados)
+Operativo --> SubProgramar : Configura programación
+Operativo --> CU504 : Marca En Disputa /\nPausa seguimiento
+Operativo --> CU505 : Solicita declarar\nIncobrable
+
+SuperAdmin --> CU505 : Aprueba / Rechaza\nIncobrable
+
+Timer --> CU503 : Dispara envíos, recordatorios\ny alertas de pausa (FR24.2)
+CU503 --> Email : Envía PDF y avisos\n(día 3, vencimiento, impago)
+
+@enduml
