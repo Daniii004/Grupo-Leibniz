@@ -1,33 +1,71 @@
 @startuml
-actor :Sistema: as system
-actor :Administrador : as admin
 
-usecase (Mostrar vista de tareas y clientes) as mostrarVistaTareas
-usecase (Aplicar filtro) as aplicarFiltro
-usecase (Reasignación masiva) as reasignacionMasiva
-usecase (Exportación masiva) as exportacionMasiva
-usecase (Panel de control financiero) as panelControl
-usecase (Mostrar vista financiera) as mostrarVistaFinanciera
-usecase (Exportar informes) as exportarDatos
-usecase (Generar paquete) as generarPaquete
-usecase (Modificar y configurar datos fiscales) as modificarDatosFiscales
-usecase (Mostrar interfaz programática) as mostrarProgramatica
-usecase (Registrar ejecución de procesos automáticos) as registrarProcesosAutomaticos
-usecase (Mostrar estado de procesos automáticos) as mostrarProcesosAutomaticos
+' --- ACTORES ---
+actor "Usuario" as user
+actor "Administrador" as admin
+actor "Superadministrador" as superadmin
+actor "Cliente API" as api
+actor "Sistema" as system
 
-system -- mostrarVistaTareas
-system -- registrarProcesosAutomaticos
-admin -- reasignacionMasiva
-admin -- exportacionMasiva
-admin -- panelControl
-admin -- mostrarVistaFinanciera
-admin -- modificarDatosFiscales
-admin -- mostrarProgramatica
+' Herencia de permisos: Admin puede hacer lo de User, Superadmin puede hacer lo de Admin
+user <|-- admin
+admin <|-- superadmin
 
-mostrarVistaTareas ..> aplicarFiltro : <<extends>>
-mostrarVistaFinanciera ..> aplicarFiltro : <<extends>>
-mostrarVistaFinanciera ..> exportarDatos : <<extends>>
-mostrarVistaFinanciera ..> generarPaquete : <<extends>>
-registrarProcesosAutomaticos ..> mostrarProcesosAutomaticos : <<extends>>
+' --- CASOS DE USO ---
+
+' Operativa diaria (FR28)
+usecase "Consultar tareas pendientes" as tareas
+usecase "Buscar clientes y facturas" as buscar
+usecase "Guardar filtros de búsqueda" as filtros
+
+' Operaciones masivas (FR29)
+usecase "Ejecutar acciones masivas" as accionesMasivas
+usecase "Transferir cliente\n(del Bloque 1)" as transferirExt
+
+' Panel e informes (FR30)
+usecase "Consultar panel financiero" as panel
+usecase "Desglosar métricas (Drill-down)" as drilldown
+usecase "Configurar objetivos de facturación" as objetivos
+usecase "Generar y exportar informes/paquetes" as informes
+usecase "Programar informes periódicos" as programar
+
+' Configuración de empresa (FR31)
+usecase "Modificar datos fiscales" as datosFiscales
+usecase "Configurar parámetros globales" as paramsGlobales
+
+' API (FR32)
+usecase "Consultar deudas vía API" as consultarDeudaAPI
+
+' Procesos automáticos (FR33)
+usecase "Monitorizar estado del sistema" as monitorizar
+usecase "Ejecutar procesos en segundo plano" as segundoPlano
+
+' --- RELACIONES ---
+
+' Usuario
+user -- tareas
+user -- buscar
+buscar ..> filtros : <<extends>>
+
+' Administrador
+admin -- accionesMasivas
+accionesMasivas ..> transferirExt : <<include>>
+
+admin -- panel
+panel ..> drilldown : <<extends>>
+admin -- objetivos
+admin -- informes
+admin -- programar
+
+admin -- datosFiscales
+admin -- consultarDeudaAPI
+admin -- monitorizar
+
+' Superadministrador
+superadmin -- paramsGlobales
+
+' Actores no humanos
+api -- consultarDeudaAPI
+system-- segundoPlano
 
 @enduml

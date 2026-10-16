@@ -287,7 +287,7 @@
     - *Dependencias:* FR28.2.
   - **FR28.4.** El sistema ofrecerá una sección de acceso directo a los clientes recientes o marcados como favoritos.
 
-- **FR29.** Ejecutar operaciones masivas sobre los clientes de forma segura.
+- **FR29.** Los administradores podrán ejecutar operaciones masivas sobre los clientes de forma segura.
   - **FR29.1.** El sistema permitirá a los administradores ejecutar acciones masivas de reasignación de clientes entre usuarios. Antes de ejecutarlas, solicitará confirmación y mostrará un resumen de los resultados.
     - *Dependencias:* FR2.1.
   - **FR29.2.** El sistema permitirá otras acciones masivas (como exportar una selección o cambiar el sector de varias empresas), mostrará el número de elementos afectados, solicitará confirmación cuando la acción sea sensible y no permitirá marcar facturas como pagadas de forma masiva.
