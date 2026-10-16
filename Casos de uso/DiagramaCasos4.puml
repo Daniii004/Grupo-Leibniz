@@ -1,0 +1,60 @@
+@startuml
+
+' --- ACTORES---
+actor :Super administrador: as superadmin
+actor :Administrador: as admin
+actor :Usuario: as user
+actor :Sistema: as system
+
+' Herencia de permisos: Un admin puede hacer lo de user y un superadmin puede hacer lo de admin
+user <|-- admin
+admin <|-- superadmin
+
+' --- CASOS DE USO ---
+
+' Presupuestos (FR13)
+usecase "Gestionar presupuestos" as gestionarPresupuestos
+
+' Facturación puntual y recurrente (FR14 y FR15)
+usecase "Emitir factura puntual" as emitirFacturaPuntual
+usecase "Generar facturación recurrente" as facturacionRecurrente
+usecase "Aplicar prorrateos y promociones" as aplicarProrrateos
+
+' Aprobaciones de facturas (FR16)
+usecase "Consultar bandeja de aprobaciones" as consultarAprobaciones
+usecase "Aprobar facturas con condiciones especiales" as aprobarFacturas
+
+' Validación y previsualización (FR17)
+usecase "Validar y previsualizar factura" as validarFactura
+
+' Estados y documentación de las facturas (FR18)
+usecase "Gestionar estados, numeración y documentación de facturas" as gestionFacturas
+
+' Rectificativas y periodos administrativos (FR19)
+usecase "Emitir factura rectificativa" as emitirRectificativa
+usecase "Gestionar periodos administrativos" as periodosAdmin
+
+' Historial y migración (FR20)
+usecase "Importar facturas antiguas" as importarFacturas
+
+' --- RELACIONES ---
+
+' Usuario
+user -- gestionarPresupuestos
+user -- emitirFacturaPuntual
+user -- consultarAprobaciones
+user -- emitirRectificativa
+
+' Administrador
+admin -- aprobarFacturas
+admin -- periodosAdmin
+admin -- importarFacturas
+
+' Procesos automáticos (Sistema)
+system -- facturacionRecurrente
+system -- gestionFacturas
+
+' Extensiones
+aplicarProrrateos ..> facturacionRecurrente : <<extends>>
+emitirFacturaPuntual ..> validarFactura : <<include>>
+@enduml
