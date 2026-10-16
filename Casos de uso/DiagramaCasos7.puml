@@ -1,0 +1,33 @@
+@startuml
+actor :Sistema: as system
+actor :Administrador : as admin
+
+usecase (Mostrar vista de tareas y clientes) as mostrarVistaTareas
+usecase (Aplicar filtro) as aplicarFiltro
+usecase (Reasignación masiva) as reasignacionMasiva
+usecase (Exportación masiva) as exportacionMasiva
+usecase (Panel de control financiero) as panelControl
+usecase (Mostrar vista financiera) as mostrarVistaFinanciera
+usecase (Exportar informes) as exportarDatos
+usecase (Generar paquete) as generarPaquete
+usecase (Modificar y configurar datos fiscales) as modificarDatosFiscales
+usecase (Mostrar interfaz programática) as mostrarProgramatica
+usecase (Registrar ejecución de procesos automáticos) as registrarProcesosAutomaticos
+usecase (Mostrar estado de procesos automáticos) as mostrarProcesosAutomaticos
+
+system -- mostrarVistaTareas
+system -- registrarProcesosAutomaticos
+admin -- reasignacionMasiva
+admin -- exportacionMasiva
+admin -- panelControl
+admin -- mostrarVistaFinanciera
+admin -- modificarDatosFiscales
+admin -- mostrarProgramatica
+
+mostrarVistaTareas ..> aplicarFiltro : <<extends>>
+mostrarVistaFinanciera ..> aplicarFiltro : <<extends>>
+mostrarVistaFinanciera ..> exportarDatos : <<extends>>
+mostrarVistaFinanciera ..> generarPaquete : <<extends>>
+registrarProcesosAutomaticos ..> mostrarProcesosAutomaticos : <<extends>>
+
+@enduml
