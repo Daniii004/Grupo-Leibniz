@@ -5,8 +5,8 @@
 * **RN-01. Automatización de la facturación y los cobros:** Sustituir el proceso actual, en el que cada factura se hace a mano y cada recordatorio de pago se escribe uno a uno, por un sistema que facture y persiga los cobros de forma automática.
   * *Se concreta en:* FR14.2, FR21, FR23.
 
-* **RN-02. Liberar al equipo de las tareas administrativas:** Turbine es una startup en fase *seed* con siete personas dedicadas al producto y al crecimiento. Hoy el CEO lleva solo toda la administración, y la empresa no quiere desviar a su equipo hacia ella.
-  * *Se concreta en:* RN-01; FR14.2, FR23.2, FR23.3.
+* **RN-02. Reducir la carga administrativa:** Quitar al CEO, que hoy lleva solo toda la administración, la mayor parte del trabajo de facturación y cobros, y poder delegarlo más adelante en un departamento administrativo sin desviar al equipo de producto.
+  * *Se concreta en:* FR2, FR14.2, FR23.2, FR23.3.
 
 * **RN-03. Gestión diaria rápida y sencilla:** Las operaciones habituales (dar de alta un cliente, emitir una factura, comprobar un cobro) deben hacerse en menos de un minuto, con los mínimos clics y sin la curva de aprendizaje de un software contable como Holded ni de un ERP.
   * *Se concreta en:* FR28; RNF-01, RNF-14.
@@ -30,8 +30,8 @@
 * **RN-08. Preparación para crecer y evolucionar:** Pasar de 10 clientes beta y una sola persona encargada a miles de clientes y un departamento administrativo, sin rehacer la herramienta. Debe admitir la vocación internacional de la empresa y cambios futuros, como otros planes, otra sociedad emisora o nuevos canales.
   * *Se concreta en:* FR4.2, FR30.5; RNF-04, RNF-11, RNF-16.
 
-* **RN-09. Cumplimiento legal de la facturación y protección de datos:** Las facturas deben ser válidas (numeración correlativa, datos fiscales e IVA) y no modificarse una vez cerrado el trimestre. Los datos fiscales y personales de los clientes deben estar protegidos y conservarse el tiempo que permita la ley.
-  * *Se concreta en:* FR18, FR19, FR33; RNF-07, RNF-09.
+* **RN-09. Cumplimiento legal de la facturación y protección de datos:** Las facturas deben ser válidas (numeración correlativa, datos fiscales e IVA) y, una vez emitidas, no pueden alterarse sin dejar rastro: cualquier corrección se hace con una factura rectificativa, y los periodos cerrados no admiten cambios ordinarios. Los datos fiscales y personales de los clientes deben estar protegidos y conservarse el tiempo que permita la ley.
+* *Se concreta en:* FR18, FR19, FR33; RNF-07, RNF-09.
 
 * **RN-10. Separación entre la administración y el producto:** La herramienta debe ser interna e independiente de Brain, el producto que Turbine vende a sus clientes, de modo que siga funcionando aunque Brain cambie. A la vez, debe poder comunicarse con Brain u otros sistemas en el futuro mediante una API.
   * *Se concreta en:* FR31.
