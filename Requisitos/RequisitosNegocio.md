@@ -20,18 +20,18 @@
   * *Se concreta en:* FR2, FR26, FR28.1.
 
 * **RN-06. Visibilidad de la situación económica:** Saber en todo momento cuánto se ha facturado, cobrado, queda pendiente o está vencido, sin abrir cliente por cliente, y poder explicar de dónde sale cada cifra.
-  * *Se concreta en:* FR29.
+  * *Se concreta en:* FR30.
 
 * **RN-07. Confianza en la automatización:** La automatización debe ser fiable y explicable: si una factura no se envió o se marcó como pagada, tiene que poder saberse por qué.
-  * *Se concreta en:* FR21.4, FR32, FR33; RNF-05, RNF-08, RNF-15.
+  * *Se concreta en:* FR21.4, FR33; RNF-05, RNF-08, RNF-15.
 
 ## 3. Crecimiento, cumplimiento legal e independencia del producto
 
 * **RN-08. Preparación para crecer y evolucionar:** Pasar de 10 clientes beta y una sola persona encargada a miles de clientes y un departamento administrativo, sin rehacer la herramienta. Debe admitir la vocación internacional de la empresa y cambios futuros, como otros planes, otra sociedad emisora o nuevos canales.
-  * *Se concreta en:* FR4.2, FR30.5; RNF-04, RNF-11, RNF-16.
+  * *Se concreta en:* FR4.2, FR30.10; RNF-04, RNF-11, RNF-16.
 
 * **RN-09. Cumplimiento legal de la facturación y protección de datos:** Las facturas deben ser válidas (numeración correlativa, datos fiscales e IVA) y, una vez emitidas, no pueden alterarse sin dejar rastro: cualquier corrección se hace con una factura rectificativa, y los periodos cerrados no admiten cambios ordinarios. Los datos fiscales y personales de los clientes deben estar protegidos y conservarse el tiempo que permita la ley.
-* *Se concreta en:* FR18, FR19, FR33; RNF-07, RNF-09.
+  * *Se concreta en:* FR18, FR19; RNF-07, RNF-08, RNF-09.
 
 * **RN-10. Separación entre la administración y el producto:** La herramienta debe ser interna e independiente de Brain, el producto que Turbine vende a sus clientes, de modo que siga funcionando aunque Brain cambie. A la vez, debe poder comunicarse con Brain u otros sistemas en el futuro mediante una API.
-  * *Se concreta en:* FR31.
+  * *Se concreta en:* FR32.
