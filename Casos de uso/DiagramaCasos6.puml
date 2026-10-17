@@ -7,45 +7,44 @@ actor "Usuario" as Usuario
 actor "Administrador" as Admin
 actor "Super Administrador" as SuperAdmin
 
-' Herencia de actores: El Administrador hereda los permisos del Usuario,
-' y el Super Administrador hereda los del Administrador.
+' Herencia de actores
 Usuario <|-- Admin
 Admin <|-- SuperAdmin
 
 rectangle "Turbine - Comunicaciones e Incidencias (Bloque 6)" {
 
-    ' --- FR25: Comunicaciones ---
+    ' --- FR24: Comunicaciones ---
     usecase "Consultar estado y registro de envíos" as UC_RegistroEnvios
     usecase "Simular envíos (Modo prueba)" as UC_SimularEnvio
     usecase "Gestionar plantillas de comunicación" as UC_Plantillas
 
-    ' --- FR26: Notificaciones ---
+    ' --- FR25: Notificaciones ---
     usecase "Consultar notificaciones y alertas" as UC_Notificaciones
     usecase "Configurar preferencias de notificación" as UC_PrefNotif
     usecase "Consultar bandeja global de notificaciones" as UC_BandejaGlobal
 
-    ' --- FR27: Incidencias y Colaboración ---
+    ' --- FR26: Incidencias y Colaboración ---
     usecase "Gestionar incidencias internas" as UC_Incidencias
     usecase "Añadir comentarios y menciones" as UC_Comentarios
     usecase "Adjuntar archivos a incidencias" as UC_Archivos
     usecase "Registrar resolución al cerrar" as UC_CerrarIncidencia
     usecase "Añadir notas restringidas" as UC_NotasRestringidas
 
-    ' Relaciones de <<extend>> para acciones específicas dentro de una incidencia
+    ' Relaciones de <<extend>> para acciones opcionales dentro de una incidencia
     UC_Incidencias <.. UC_Comentarios : <<extend>>
     UC_Incidencias <.. UC_Archivos : <<extend>>
     UC_Incidencias <.. UC_CerrarIncidencia : <<extend>>
     UC_Incidencias <.. UC_NotasRestringidas : <<extend>>
 }
 
-' Asociaciones del Usuario / Lector (FR25.2, FR25.4, FR26.1, FR26.3, FR27.1)
+' Asociaciones del Usuario
 Usuario -- UC_RegistroEnvios
 Usuario -- UC_SimularEnvio
 Usuario -- UC_Notificaciones
 Usuario -- UC_PrefNotif
 Usuario -- UC_Incidencias
 
-' Asociaciones específicas del Administrador (FR25.1, FR26.3, FR27.2)
+' Asociaciones exclusivas del Administrador
 Admin -- UC_Plantillas
 Admin -- UC_BandejaGlobal
 Admin -- UC_NotasRestringidas
