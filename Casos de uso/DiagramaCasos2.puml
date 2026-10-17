@@ -1,0 +1,97 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+skinparam usecase {
+    BackgroundColor #F8FAFC
+    BorderColor #334155
+    ArrowColor #475569
+}
+
+' --- ACTORES ---
+actor "Usuario" as User
+actor "Administrador" as Admin
+actor "Superadministrador" as SuperAdmin
+actor "Sistema" as Sistema <<Sistema>>
+
+' Herencia de permisos: el administrador puede hacer lo del usuario
+' y el superadministrador, lo del administrador
+User <|-- Admin
+Admin <|-- SuperAdmin
+
+rectangle "Sistema interno de facturación y cobros de Turbine - Bloque 2: Gestión de clientes y contactos" {
+
+    package "Gestión de clientes (FR4)" {
+        usecase "CU-201: Dar de alta un cliente\n(datos comerciales y fiscales)\n(FR4, FR4.1, FR4.2)" as CU201
+        usecase "CU-202: Modificar la ficha\ndel cliente\n(FR4, FR4.1)" as CU202
+    }
+
+    package "Personas de contacto (FR5)" {
+        usecase "CU-203: Gestionar personas\nde contacto\n(FR5)" as CU203
+        usecase "CU-204: Asignar rol al\ncontacto en la empresa\n(FR5.2)" as CU204
+        usecase "CU-205: Reutilizar un contacto\nen varias empresas\n(FR5.1)" as CU205
+        usecase "CU-206: Desactivar un contacto\nconservando su historial\n(FR5.3)" as CU206
+        usecase "CU-207: Avisar del único\ncontacto de facturación\n(FR5.4)" as CU207
+        usecase "CU-208: Registrar canales de\ncomunicación del contacto\n(FR5.5)" as CU208
+    }
+
+    package "Ciclo de vida y estados del cliente (FR6)" {
+        usecase "CU-209: Gestionar el estado\ndel cliente\n(FR6, FR6.3)" as CU209
+        usecase "CU-210: Validar duplicidad\nde NIF\n(FR6.1)" as CU210
+        usecase "CU-211: Fusionar clientes\nduplicados\n(FR6.2)" as CU211
+        usecase "CU-212: Bloquear la recurrencia\nsin datos fiscales\n(FR6.4)" as CU212
+    }
+
+    package "Importación de clientes (FR7)" {
+        usecase "CU-213: Importar clientes\ndesde un archivo CSV\n(FR7)" as CU213
+        usecase "CU-214: Previsualizar y mapear\nel archivo\n(FR7.1, FR7.3)" as CU214
+        usecase "CU-215: Generar informe\nde importación\n(FR7.2)" as CU215
+    }
+
+    package "Historial del cliente (FR8)" {
+        usecase "CU-216: Consultar el historial\ndel cliente\n(FR8, FR8.1)" as CU216
+    }
+
+    ' --- RELACIONES ENTRE CASOS DE USO ---
+    CU201 ..> CU210 : <<include>>
+    CU209 ..> CU210 : <<include>>
+    CU201 ..> CU212 : <<include>>
+    CU209 ..> CU212 : <<include>>
+    CU213 ..> CU214 : <<include>>
+    CU213 ..> CU215 : <<include>>
+
+    CU203 ..> CU204 : <<extend>>
+    CU203 ..> CU205 : <<extend>>
+    CU203 ..> CU208 : <<extend>>
+    CU206 ..> CU207 : <<extend>>\n[es el único contacto\nde facturación]
+    CU211 ..> CU216 : <<extend>>\n[unifica el historial]
+
+    ' Restricción de uso de los datos de facturación (FR5.5)
+    note bottom of CU208
+        FR5.5: Los datos de facturación no se
+        utilizan para fines comerciales ajenos
+        a la gestión administrativa.
+    end note
+}
+
+' --- ASOCIACIONES ACTOR - CASO DE USO ---
+
+' Usuario Operativo (sobre sus clientes asignados)
+Operativo --> CU202
+Operativo --> CU203
+Operativo --> CU208
+Operativo --> CU216
+
+' Administrador
+Admin --> CU201
+Admin --> CU206
+Admin --> CU209
+Admin --> CU211
+Admin --> CU213
+
+' Procesos automáticos del sistema
+Sistema --> CU210
+Sistema --> CU212
+Sistema --> CU215
+
+@enduml

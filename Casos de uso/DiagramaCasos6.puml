@@ -13,17 +13,17 @@ Admin <|-- SuperAdmin
 
 rectangle "Turbine - Comunicaciones e Incidencias (Bloque 6)" {
 
-    ' --- FR24: Comunicaciones ---
+    ' --- FR25: Comunicaciones ---
     usecase "Consultar estado y registro de envíos" as UC_RegistroEnvios
     usecase "Simular envíos (Modo prueba)" as UC_SimularEnvio
     usecase "Gestionar plantillas de comunicación" as UC_Plantillas
 
-    ' --- FR25: Notificaciones ---
+    ' --- FR26: Notificaciones ---
     usecase "Consultar notificaciones y alertas" as UC_Notificaciones
     usecase "Configurar preferencias de notificación" as UC_PrefNotif
     usecase "Consultar bandeja global de notificaciones" as UC_BandejaGlobal
 
-    ' --- FR26: Incidencias y Colaboración ---
+    ' --- FR27: Incidencias y Colaboración ---
     usecase "Gestionar incidencias internas" as UC_Incidencias
     usecase "Añadir comentarios y menciones" as UC_Comentarios
     usecase "Adjuntar archivos a incidencias" as UC_Archivos

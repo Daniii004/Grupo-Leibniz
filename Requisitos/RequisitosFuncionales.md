@@ -82,7 +82,7 @@
   - *Dependencias:* FR4.
   - **FR9.1.** El sistema permitirá subir copias de los contratos o acuerdos firmados a la ficha de cada suscripción.
     - *Dependencias:* FR9.
-  - **FR9.2.** El sistema guardará para cada cliente la fecha del inicio de la suscripción, el servicio o plan contratado y el importe acordado.
+  - **FR9.2.** El sistema guardará para cada cliente la fecha del inicio de la suscripción, el servicio o plan contratado y el importe acordado. 
     - *Dependencias:* FR9.
   - **FR9.3.** El sistema permitirá registrar suscripciones con fecha de inicio futura, sin generar facturas ni recordatorios de cobro hasta esa fecha y mostrando al cliente como *Pendiente de activación*.
     - *Dependencias:* FR9, FR6.3.
