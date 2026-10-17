@@ -5,11 +5,11 @@
 ## Caso de Uso: Dar de alta una suscripción
 
 * **ID / Código:** CU-301
-* **Actor principal:** Usuario Operativo (responsable del cliente) / Administrador.
+* **Actor principal:** Usuario (responsable del cliente).
 * **Ámbito:** Sistema interno de facturación y cobros de Turbine.
 * **Nivel:** Objetivo de usuario.
-* **Requisitos:** FR9, FR9.1, FR9.2, FR9.3. Relacionados: FR6.3, FR6.4; FR14.2, FR15.1 y FR15.2 (bloque 4).
-* **Descripción:** El usuario registra el acuerdo comercial mensual de un cliente: la fecha de inicio (actual o futura), el plan o servicio contratado, la tarifa acordada, las condiciones de pago y el responsable interno, y adjunta el contrato si se firmó fuera de la plataforma. A partir de la fecha de inicio, el sistema factura al cliente cada mes de forma automática («Generar facturación recurrente», bloque 4).
+* **Requisitos:** FR9, FR9.1, FR9.2, FR9.3. Relacionados: FR6.3, FR6.4; FR14.2, FR15.1 y FR15.2 (CU-403 y CU-404, bloque 4).
+* **Descripción:** El usuario registra el acuerdo comercial mensual de un cliente: la fecha de inicio (actual o futura), el plan o servicio contratado, la tarifa acordada, las condiciones de pago y el responsable interno, y adjunta el contrato si se firmó fuera de la plataforma. A partir de la fecha de inicio, el sistema factura al cliente cada mes de forma automática (CU-403, bloque 4).
 
 **Interesados:**
 
@@ -40,16 +40,16 @@
 3. El usuario indica la fecha de inicio, confirma o ajusta el plan, la tarifa y las condiciones de pago, y asigna el responsable interno.
 4. El usuario adjunta, si existe, el contrato o acuerdo firmado.
 5. El sistema comprueba que el cliente tiene los datos fiscales necesarios para facturar.
-6. Si la fecha de inicio no es día 1, el sistema calcula el importe prorrateado de los días restantes del mes y lo muestra.
+6. Si la fecha de inicio no es día 1, el sistema calcula el importe prorrateado de los días restantes del mes (CU-404) y lo muestra.
 7. El sistema muestra un resumen de lo que va a ocurrir: el importe de la primera factura, la fecha de la siguiente mensualidad y las condiciones de pago.
 8. El usuario confirma el alta.
-9. El sistema registra la suscripción, cambia el estado del cliente a *Activo*, programa la facturación recurrente y anota el alta en el historial del cliente.
+9. El sistema registra la suscripción, cambia el estado del cliente a *Activo*, programa la facturación recurrente (CU-403) y anota el alta en el historial del cliente.
 
 **Extensiones:**
 
 * **3a. La fecha de inicio es futura:** El sistema registra la suscripción, deja al cliente en estado *Pendiente de activación* y no genera facturas ni recordatorios hasta esa fecha. La activación la realiza el sistema al llegar la fecha (CU-306).
-* **3b. Se acuerda una excepción comercial (primer mes gratis o empezar a facturar el mes siguiente sin prorrateo):** El usuario indica la excepción, que queda registrada de forma explícita en la suscripción. Si supera el umbral configurado, queda pendiente de aprobación antes de activarse (FR16.5, bloque 4).
-* **5a. Faltan datos fiscales del cliente:** El sistema bloquea la activación de la recurrencia, indica qué datos faltan y no permite confirmar el alta hasta que se completen.
+* **3b. Se acuerda una excepción comercial (primer mes gratis o empezar a facturar el mes siguiente sin prorrateo):** El usuario indica la excepción, que queda registrada de forma explícita en la suscripción. Al generar la factura se aplica la excepción (CU-404) y, si supera el umbral configurado, la factura queda pendiente de aprobación (CU-405, bloque 4).
+* **5a. Faltan datos fiscales del cliente:** El sistema bloquea la activación de la recurrencia e indica qué datos faltan. Si el usuario los completa en la ficha del cliente, el flujo vuelve al paso 5; si no, el caso de uso termina sin crear la suscripción.
 * **Cualquier paso. El usuario cancela la operación:** El sistema no guarda ningún cambio.
 
 ---
@@ -57,7 +57,7 @@
 ## Caso de Uso: Modificar una suscripción
 
 * **ID / Código:** CU-302
-* **Actor principal:** Usuario Operativo (responsable del cliente) / Administrador.
+* **Actor principal:** Usuario (responsable del cliente).
 * **Ámbito:** Sistema interno de facturación y cobros de Turbine.
 * **Nivel:** Objetivo de usuario.
 * **Requisitos:** FR9, FR9.1. Relacionados: FR8.1, FR11.
@@ -96,7 +96,7 @@
 
 * **3a. El usuario intenta cambiar la tarifa:** El sistema indica que el cambio de tarifa se tramita mediante la revisión anual (CU-308) o como excepción comercial aprobada, y no permite cambiarla desde aquí.
 * **3b. Se cambia el responsable interno:** El cambio de responsable del cliente sigue las reglas de transferencia del bloque 1 («Transferir cliente», FR2.1): las tareas pendientes pasan al nuevo responsable.
-* **4a. Algún dato no es válido:** El sistema indica qué dato hay que corregir y no permite confirmar.
+* **4a. Algún dato no es válido:** El sistema indica qué dato hay que corregir y el flujo vuelve al paso 3.
 * **Cualquier paso. El usuario cancela la operación:** El sistema no guarda ningún cambio.
 
 ---
@@ -104,7 +104,7 @@
 ## Caso de Uso: Pausar una suscripción
 
 * **ID / Código:** CU-303
-* **Actor principal:** Usuario Operativo (responsable del cliente) / Administrador.
+* **Actor principal:** Usuario (responsable del cliente).
 * **Ámbito:** Sistema interno de facturación y cobros de Turbine.
 * **Nivel:** Objetivo de usuario.
 * **Requisitos:** FR10. Relacionados: FR6, FR10.1.
@@ -142,7 +142,7 @@
 **Extensiones:**
 
 * **2a. No se conoce la fecha de reactivación:** La pausa queda abierta, sin aviso programado, hasta que el responsable la reanude (CU-304).
-* **3a. El usuario no indica el motivo:** El sistema muestra un mensaje indicando el dato que falta y no guarda la pausa.
+* **3a. El usuario no indica el motivo:** El sistema indica que el motivo es obligatorio y el flujo vuelve al paso 2.
 * **Cualquier paso. El usuario cancela la operación:** La suscripción sigue activa.
 
 ---
@@ -150,7 +150,7 @@
 ## Caso de Uso: Reanudar una suscripción
 
 * **ID / Código:** CU-304
-* **Actor principal:** Usuario Operativo (responsable del cliente) / Administrador.
+* **Actor principal:** Usuario (responsable del cliente).
 * **Ámbito:** Sistema interno de facturación y cobros de Turbine.
 * **Nivel:** Objetivo de usuario.
 * **Requisitos:** FR10.1, FR10.4. Relacionados: FR6, FR14.2.
@@ -178,7 +178,7 @@
 
 **Escenario principal de éxito:**
 
-1. El responsable abre la suscripción pausada desde el aviso o desde su pantalla de trabajo diario.
+1. El responsable abre la suscripción pausada desde el aviso (CU-603, bloque 6) o desde su pantalla de trabajo diario.
 2. El sistema muestra los datos de la pausa: motivo, fecha de inicio y fecha prevista de reactivación.
 3. El responsable confirma la reanudación.
 4. El sistema reactiva la suscripción, cambia el estado del cliente a *Activo*, reactiva la facturación recurrente y lo anota en el historial del cliente.
@@ -193,7 +193,7 @@
 ## Caso de Uso: Dar de baja una suscripción
 
 * **ID / Código:** CU-305
-* **Actor principal:** Usuario Operativo (responsable del cliente) / Administrador.
+* **Actor principal:** Usuario (responsable del cliente).
 * **Ámbito:** Sistema interno de facturación y cobros de Turbine.
 * **Nivel:** Objetivo de usuario.
 * **Requisitos:** FR10.2, FR10.3. Relacionados: FR6.3, FR23; FR32.1 (bloque 7).
@@ -267,7 +267,7 @@
 
 1. El Temporizador del sistema inicia el proceso diario.
 2. El sistema activa las suscripciones cuya fecha de inicio es hoy y cambia el estado de esos clientes de *Pendiente de activación* a *Activo*.
-3. El sistema localiza las suscripciones pausadas cuya fecha prevista de reactivación es hoy y envía un aviso a sus responsables.
+3. El sistema localiza las suscripciones pausadas cuya fecha prevista de reactivación es hoy y envía un aviso a sus responsables (CU-603, bloque 6).
 4. Si la política configurada no exige confirmación, el sistema reanuda esas suscripciones; si la exige, deja la reanudación pendiente para el responsable (CU-304).
 5. El sistema cierra la recurrencia de las suscripciones cuya fecha efectiva de baja es hoy; los clientes sin facturas pendientes pasan a *Baja*.
 6. El sistema registra la ejecución: cuántas suscripciones procesó, cuáles fallaron y el motivo.
@@ -313,7 +313,7 @@
 1. El Temporizador del sistema inicia la revisión anual.
 2. El sistema selecciona los clientes con suscripción activa que deben revisarse.
 3. El sistema crea una revisión pendiente para cada cliente y la asigna a su responsable.
-4. El sistema avisa a cada responsable y muestra sus revisiones pendientes en la pantalla de trabajo diario.
+4. El sistema avisa a cada responsable (CU-603, bloque 6) y muestra sus revisiones pendientes en la pantalla de trabajo diario.
 5. El sistema registra la ejecución con el número de revisiones creadas.
 
 **Extensiones:**
@@ -325,7 +325,7 @@
 ## Caso de Uso: Registrar la facturación anual de un cliente
 
 * **ID / Código:** CU-308
-* **Actor principal:** Usuario Operativo (responsable del cliente) / Administrador.
+* **Actor principal:** Usuario (responsable del cliente).
 * **Ámbito:** Sistema interno de facturación y cobros de Turbine.
 * **Nivel:** Objetivo de usuario.
 * **Requisitos:** FR11, FR11.3, FR11.4. Relacionados: FR11.2.
@@ -374,7 +374,7 @@
 * **Actor principal:** Administrador.
 * **Ámbito:** Sistema interno de facturación y cobros de Turbine.
 * **Nivel:** Objetivo de usuario.
-* **Requisitos:** FR11.1, FR11.3. Relacionados: FR16.2 (bloque 4), FR26.
+* **Requisitos:** FR11.1, FR11.3. Relacionados: FR16.2 y CU-405 (bloque 4), FR26.
 * **Descripción:** El aprobador revisa la propuesta de cambio de tarifa que ha generado la revisión anual de un cliente y la aprueba o la rechaza. Si la aprueba, la nueva tarifa se aplica desde su fecha de efecto, sin modificar las facturas ya emitidas.
 
 **Interesados:**
@@ -387,6 +387,7 @@
 
 * El usuario ha iniciado sesión con rol de Administrador.
 * Existe una propuesta de cambio de tarifa pendiente de aprobación (CU-308).
+* El aprobador no es la persona que registró el dato de facturación.
 
 **Disparador:** El aprobador recibe el aviso de una propuesta de cambio de tarifa pendiente.
 
@@ -408,6 +409,7 @@
 
 **Extensiones:**
 
+* **2a. El aprobador es la persona que registró el dato de facturación:** El sistema bloquea la aprobación e indica que debe revisarla otro administrador o el superadministrador, como en la aprobación de facturas (CU-405).
 * **3a. El aprobador rechaza la propuesta:** El aprobador indica el motivo; la tarifa no cambia, el rechazo queda registrado y el sistema notifica al responsable el comentario del aprobador.
 * **Cualquier paso. El aprobador cancela la operación:** La propuesta sigue pendiente.
 
@@ -452,7 +454,7 @@
 
 **Extensiones:**
 
-* **4a. La tabla no es válida (por ejemplo, dos rangos se solapan):** El sistema indica el error y no permite confirmar hasta que se corrija.
+* **4a. La tabla no es válida (por ejemplo, dos rangos se solapan):** El sistema indica el error y el flujo vuelve al paso 3.
 * **Cualquier paso. El superadministrador cancela la operación:** El sistema mantiene la tabla vigente sin cambios.
 
 ---
@@ -463,8 +465,8 @@
 * **Actor principal:** Administrador.
 * **Ámbito:** Sistema interno de facturación y cobros de Turbine.
 * **Nivel:** Objetivo de usuario.
-* **Requisitos:** FR12, FR12.2. Relacionados: FR12.1, FR31.2.
-* **Descripción:** El administrador mantiene una lista ligera de conceptos que se facturan a menudo (instalación, consultoría, formación, hardware…), con una descripción, un precio orientativo y un impuesto por defecto, para no escribirlos cada vez de una forma distinta. Al crear una factura, el usuario puede ajustar la descripción y el precio del concepto (FR12.1, «Emitir factura puntual», bloque 4). Los cambios en el catálogo no afectan a las facturas ya creadas.
+* **Requisitos:** FR12, FR12.2. Relacionados: FR12.1 (CU-402, bloque 4), FR31.2.
+* **Descripción:** El administrador mantiene una lista ligera de conceptos que se facturan a menudo (instalación, consultoría, formación, hardware…), con una descripción, un precio orientativo y un impuesto por defecto, para no escribirlos cada vez de una forma distinta. Al crear una factura, el usuario puede ajustar la descripción y el precio del concepto (FR12.1, CU-402, bloque 4). Los cambios en el catálogo no afectan a las facturas ya creadas.
 
 **Interesados:**
 
@@ -497,7 +499,7 @@
 **Extensiones:**
 
 * **3a. El administrador modifica un concepto existente:** El sistema guarda el cambio; las facturas ya creadas con ese concepto mantienen los datos con los que se emitieron.
-* **4a. Faltan datos obligatorios:** El sistema indica qué dato falta y no guarda el concepto.
+* **4a. Faltan datos obligatorios:** El sistema indica qué dato falta y el flujo vuelve al paso 3.
 * **Cualquier paso. El administrador cancela la operación:** El sistema no guarda ningún cambio.
 
 ---
@@ -510,7 +512,7 @@
 | FR9.1 | CU-301, CU-302 |
 | FR9.2 | CU-301 |
 | FR9.3 | CU-301 (3a), CU-306 |
-| FR9.4 | «Generar facturación recurrente» (bloque 4) |
+| FR9.4 | CU-403 (bloque 4) |
 | FR10 | CU-303 |
 | FR10.1 | CU-304, CU-306 |
 | FR10.2 | CU-305 |
@@ -522,16 +524,13 @@
 | FR11.3 | CU-307, CU-308, CU-309 |
 | FR11.4 | CU-308 (1a) |
 | FR12 | CU-311 |
-| FR12.1 | «Emitir factura puntual» (bloque 4) |
+| FR12.1 | CU-402 (bloque 4) |
 | FR12.2 | CU-311 |
 
 ---
 
-## Dudas para el cliente
+## Dudas
 
-Puntos que el caso no aclara. Se propone una interpretación, a la espera de confirmarla en la próxima revisión.
-
-* **D-301. ¿Qué se factura al reanudar una suscripción a mitad de mes?** Propuesta: aplicar el mismo prorrateo que en un alta a mitad de mes (FR15.1).
-* **D-302. ¿Puede aprobar un cambio de tarifa la misma persona que registró el dato de facturación?** Propuesta: no, aplicando la separación de funciones de FR16.2.
-* **D-303. ¿Quién gestiona el catálogo de conceptos?** FR12 no lo dice. Propuesta: el Administrador.
-* **D-304. ¿Puede el producto (Brain) solicitar la baja por la interfaz programática?** El cliente lo pidió en la reunión ampliada (p. 10) y estaba en los FR, pero se quitó al reorganizar el bloque 7. Propuesta: recuperarlo como requisito del bloque 7.
+* **D-301. ¿Qué se factura al reanudar una suscripción a mitad de mes?**
+* **D-303. ¿Quién gestiona el catálogo de conceptos?**
+* **D-304. ¿Puede el producto (Brain) solicitar la baja por la interfaz programática?**

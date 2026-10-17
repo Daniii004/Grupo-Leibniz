@@ -1,0 +1,66 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+
+' --- ACTORES ---
+actor "Usuario" as Usuario
+actor "Administrador" as Admin
+actor "Superadministrador" as SuperAdmin
+actor "Temporizador\n(Scheduler)" as Timer <<Sistema>>
+
+' Herencia de permisos: el administrador puede hacer lo del usuario
+' y el superadministrador, lo del administrador
+Usuario <|-- Admin
+Admin <|-- SuperAdmin
+
+rectangle "Sistema interno de facturación y cobros de Turbine" {
+
+    package "Bloque 3: Suscripciones, tarifas y catálogo" {
+
+        ' Suscripciones (FR9 y FR10)
+        usecase "CU-301\nDar de alta una suscripción" as CU301
+        usecase "CU-302\nModificar una suscripción" as CU302
+        usecase "CU-303\nPausar una suscripción" as CU303
+        usecase "CU-304\nReanudar una suscripción" as CU304
+        usecase "CU-305\nDar de baja una suscripción" as CU305
+        usecase "CU-306\nProcesar los cambios programados\nde las suscripciones" as CU306
+
+        ' Revisión anual y tabla de tarifas (FR11)
+        usecase "CU-307\nPreparar la revisión anual\nde tarifas" as CU307
+        usecase "CU-308\nRegistrar la facturación anual\nde un cliente" as CU308
+        usecase "CU-309\nAprobar un cambio de tarifa" as CU309
+        usecase "CU-310\nConfigurar la tabla de tarifas\npor rangos" as CU310
+
+        ' Catálogo de conceptos (FR12)
+        usecase "CU-311\nGestionar el catálogo\nde conceptos" as CU311
+    }
+
+    ' Caso de uso del bloque 4 que se reutiliza en el alta
+    usecase "CU-404\nAplicar prorrateos y promociones\n(bloque 4)" as CU404
+}
+
+' --- RELACIONES ---
+
+' Usuario (responsable del cliente)
+Usuario -- CU301
+Usuario -- CU302
+Usuario -- CU303
+Usuario -- CU304
+Usuario -- CU305
+Usuario -- CU308
+
+' Administrador
+Admin -- CU309
+Admin -- CU311
+
+' Superadministrador
+SuperAdmin -- CU310
+
+' Procesos automáticos
+Timer -- CU306
+Timer -- CU307
+
+' Extensiones
+CU404 ..> CU301 : <<extend>>\n[la fecha de inicio\nno es día 1]
+
+@enduml
