@@ -1,15 +1,9 @@
 @startuml
 left to right direction
 skinparam packageStyle rectangle
-skinparam actorStyle awesome
-skinparam usecase {
-    BackgroundColor #F8FAFC
-    BorderColor #334155
-    ArrowColor #475569
-}
 
 ' --- ACTORES ---
-actor "Usuario" as User
+actor "Usuario" as Usuario
 actor "Administrador" as Admin
 actor "Superadministrador" as SuperAdmin
 actor "Sistema" as Sistema <<Sistema>>
@@ -17,74 +11,62 @@ actor "Temporizador\n(Scheduler)" as Timer <<Sistema>>
 
 ' Herencia de permisos: el administrador puede hacer lo del usuario
 ' y el superadministrador, lo del administrador
-User <|-- Admin
+Usuario <|-- Admin
 Admin <|-- SuperAdmin
 
-rectangle "Sistema interno de facturación y cobros de Turbine - Bloque 1: Gestión de usuarios, roles y asignaciones" {
+rectangle "Sistema interno de facturación y cobros de Turbine" {
 
-    package "Gestión de cuentas de usuario (FR1)" {
-        usecase "CU-101: Registrar / invitar\nuna cuenta de usuario\n(FR1, FR1.6)" as CU101
-        usecase "CU-102: Restablecer contraseña\n(FR1.2)" as CU102
-        usecase "CU-103: Desactivar cuenta\nde usuario\n(FR1.3)" as CU103
-        usecase "CU-104: Cerrar sesiones activas\nal desactivar la cuenta\n(FR1.4)" as CU104
-        usecase "CU-105: Cerrar sesión por\ninactividad\n(FR1.5)" as CU105
+    package "Bloque 1: Gestión de usuarios, roles y asignaciones" {
+
+        ' Cuentas de usuario (FR1)
+        usecase "CU-101\nRegistrar / invitar una cuenta\nde usuario (sin autorregistro)" as CU101
+        usecase "CU-102\nRestablecer contraseña" as CU102
+        usecase "CU-103\nDesactivar cuenta de usuario" as CU103
+        usecase "CU-104\nCerrar sesiones activas\nal desactivar la cuenta" as CU104
+        usecase "CU-105\nCerrar sesión por inactividad" as CU105
+
+        ' Asignación de clientes (FR2)
+        usecase "CU-106\nAsignar clientes a usuarios" as CU106
+        usecase "CU-107\nTransferir cliente a otro usuario" as CU107
+        usecase "CU-108\nCeder cliente de forma temporal" as CU108
+        usecase "CU-109\nDevolver cliente al\nresponsable inicial" as CU109
+
+        ' Autorización por roles (FR3)
+        usecase "CU-110\nAplicar autorización\ncentralizada por roles" as CU110
+        usecase "CU-111\nAcceder a los clientes asignados" as CU111
+        usecase "CU-112\nBloquear acciones no permitidas\ndel usuario operativo" as CU112
+        usecase "CU-113\nConfigurar el sistema globalmente" as CU113
     }
-
-    package "Asignación de clientes (FR2)" {
-        usecase "CU-106: Asignar clientes a\nusuarios disponibles\n(FR2)" as CU106
-        usecase "CU-107: Transferir cliente\na otro usuario\n(FR2.1)" as CU107
-        usecase "CU-108: Ceder cliente de\nforma temporal\n(FR2.2)" as CU108
-        usecase "CU-109: Devolver cliente al\nresponsable inicial\n(FR2.2)" as CU109
-    }
-
-    package "Autorización por roles (FR3)" {
-        usecase "CU-110: Aplicar autorización\ncentralizada por roles\n(FR3)" as CU110
-        usecase "CU-111: Acceder a los clientes\nasignados\n(FR3.1)" as CU111
-        usecase "CU-112: Bloquear acciones no\npermitidas del User\n(FR3.2)" as CU112
-        usecase "CU-113: Configurar el sistema\nglobalmente\n(FR3.3)" as CU113
-    }
-
-    ' Subcaso reutilizado por el alta de usuarios (FR1.1)
-    usecase "Validar dominio\nde correo corporativo\n(FR1.1)" as ValidarDominio
-
-    ' --- RELACIONES ENTRE CASOS DE USO ---
-    CU101 ..> ValidarDominio : <<include>>
-    CU107 ..> CU106 : <<include>>
-    CU103 ..> CU104 : <<include>>
-    CU108 ..> CU109 : <<extend>>\n[llega la fecha de fin]
-
-    ' Restricción: no existe autorregistro (FR1.6)
-    note right of CU101
-        FR1.6: No se permite el autorregistro.
-        Solo un Superadministrador o un
-        Administrador con permiso puede crear
-        o invitar a nuevos usuarios.
-    end note
 }
+
+' --- RELACIONES ENTRE CASOS DE USO ---
+CU103 ..> CU104 : <<include>>
+CU107 ..> CU106 : <<include>>
+
+' Extensiones (la flecha parte del caso que extiende)
+CU109 ..> CU108 : <<extend>>\n[llega la fecha de fin]
 
 ' --- ASOCIACIONES ACTOR - CASO DE USO ---
 
-' Usuario User
-User --> CU102 : Solicita enlace\ntemporal
-User --> CU111 : Consulta y modifica\nsus clientes
+' Usuario
+Usuario -- CU102
+Usuario -- CU111
 
 ' Administrador
-Admin --> CU101
-Admin --> CU103
-Admin --> CU106
-Admin --> CU107
-Admin --> CU108
+Admin -- CU101
+Admin -- CU103
+Admin -- CU106
+Admin -- CU107
+Admin -- CU108
 
 ' Superadministrador
-SuperAdmin --> CU113
+SuperAdmin -- CU113
 
-' Procesos automáticos del sistema
-Sistema --> CU104
-Sistema --> CU110
-Sistema --> CU112
-
-' Tareas programadas
-Timer --> CU105
-Timer --> CU109
+' Procesos automáticos
+Sistema -- CU104
+Sistema -- CU110
+Sistema -- CU112
+Timer -- CU105
+Timer -- CU109
 
 @enduml
