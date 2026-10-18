@@ -16,7 +16,6 @@ admin <|-- superadmin
 ' Operativa diaria (FR28)
 usecase "Consultar tareas pendientes" as tareas
 usecase "Buscar clientes y facturas" as buscar
-usecase "Guardar filtros de búsqueda" as filtros
 
 ' Operaciones masivas (FR29)
 usecase "Ejecutar acciones masivas" as accionesMasivas
@@ -45,7 +44,6 @@ usecase "Ejecutar procesos en segundo plano" as segundoPlano
 ' Usuario
 user -- tareas
 user -- buscar
-buscar ..> filtros : <<extends>>
 
 ' Administrador
 admin -- accionesMasivas
