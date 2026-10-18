@@ -38,17 +38,17 @@ rectangle "Sistema Interno de Facturación y Cobros (Turbine) - Bloque 5: Cobros
 }
 
 ' Conexiones Actores -> Casos de Uso
-Stripe --> CU501 : Notifica evento\nde cobro
-Admin --> CU501 : Carga movimientos\n(Revolut / Banco)
+Stripe -- CU501 : Notifica evento\nde cobro
+Admin -- CU501 : Carga movimientos\n(Revolut / Banco)
 
-Operativo --> CU502 : Concilia o revierte\n(clientes asignados)
-Operativo --> SubProgramar : Configura programación
-Operativo --> CU504 : Marca En Disputa /\nPausa seguimiento
-Operativo --> CU505 : Solicita declarar\nIncobrable
+Operativo -- CU502 : Concilia o revierte\n(clientes asignados)
+Operativo -- SubProgramar : Configura programación
+Operativo -- CU504 : Marca En Disputa /\nPausa seguimiento
+Operativo -- CU505 : Solicita declarar\nIncobrable
 
-SuperAdmin --> CU505 : Aprueba / Rechaza\nIncobrable
+SuperAdmin -- CU505 : Aprueba / Rechaza\nIncobrable
 
-Timer --> CU503 : Dispara envíos, recordatorios\ny alertas de pausa (FR24.2)
-CU503 --> Email : Envía PDF y avisos\n(día 3, vencimiento, impago)
+Timer -- CU503 : Dispara envíos, recordatorios\ny alertas de pausa (FR24.2)
+CU503 -- Email : Envía PDF y avisos\n(día 3, vencimiento, impago)
 
 @enduml
