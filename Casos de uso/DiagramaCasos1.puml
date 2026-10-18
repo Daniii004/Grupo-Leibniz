@@ -19,23 +19,23 @@ rectangle "Sistema interno de facturación y cobros de Turbine" {
     package "Bloque 1: Gestión de usuarios, roles y asignaciones" {
 
         ' Cuentas de usuario (FR1)
-        usecase "CU-101\nRegistrar / invitar una cuenta\nde usuario (sin autorregistro)" as CU101
-        usecase "CU-102\nRestablecer contraseña" as CU102
-        usecase "CU-103\nDesactivar cuenta de usuario" as CU103
-        usecase "CU-104\nCerrar sesiones activas\nal desactivar la cuenta" as CU104
-        usecase "CU-105\nCerrar sesión por inactividad" as CU105
+        usecase "Registrar / invitar una cuenta\nde usuario (sin autorregistro)" as CU101
+        usecase "Restablecer contraseña" as CU102
+        usecase "Desactivar cuenta de usuario" as CU103
+        usecase "Cerrar sesiones activas\nal desactivar la cuenta" as CU104
+        usecase "Cerrar sesión por inactividad" as CU105
 
         ' Asignación de clientes (FR2)
-        usecase "CU-106\nAsignar clientes a usuarios" as CU106
-        usecase "CU-107\nTransferir cliente a otro usuario" as CU107
-        usecase "CU-108\nCeder cliente de forma temporal" as CU108
-        usecase "CU-109\nDevolver cliente al\nresponsable inicial" as CU109
+        usecase "Asignar clientes a usuarios" as CU106
+        usecase "Transferir cliente a otro usuario" as CU107
+        usecase "Ceder cliente de forma temporal" as CU108
+        usecase "Devolver cliente al\nresponsable inicial" as CU109
 
         ' Autorización por roles (FR3)
-        usecase "CU-110\nAplicar autorización\ncentralizada por roles" as CU110
-        usecase "CU-111\nAcceder a los clientes asignados" as CU111
-        usecase "CU-112\nBloquear acciones no permitidas\ndel usuario operativo" as CU112
-        usecase "CU-113\nConfigurar el sistema globalmente" as CU113
+        usecase "Aplicar autorización\ncentralizada por roles" as CU110
+        usecase "Acceder a los clientes asignados" as CU111
+        usecase "Bloquear acciones no permitidas\ndel usuario operativo" as CU112
+        usecase "Configurar el sistema globalmente" as CU113
     }
 }
 
