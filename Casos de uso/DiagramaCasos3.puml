@@ -18,25 +18,25 @@ rectangle "Sistema interno de facturación y cobros de Turbine" {
     package "Bloque 3: Suscripciones, tarifas y catálogo" {
 
         ' Suscripciones (FR9 y FR10)
-        usecase "CU-301\nDar de alta una suscripción" as CU301
-        usecase "CU-302\nModificar una suscripción" as CU302
-        usecase "CU-303\nPausar una suscripción" as CU303
-        usecase "CU-304\nReanudar una suscripción" as CU304
-        usecase "CU-305\nDar de baja una suscripción" as CU305
-        usecase "CU-306\nProcesar los cambios programados\nde las suscripciones" as CU306
+        usecase "Dar de alta una suscripción" as CU301
+        usecase "Modificar una suscripción" as CU302
+        usecase "Pausar una suscripción" as CU303
+        usecase "Reanudar una suscripción" as CU304
+        usecase "Dar de baja una suscripción" as CU305
+        usecase "Procesar los cambios programados\nde las suscripciones" as CU306
 
         ' Revisión anual y tabla de tarifas (FR11)
-        usecase "CU-307\nPreparar la revisión anual\nde tarifas" as CU307
-        usecase "CU-308\nRegistrar la facturación anual\nde un cliente" as CU308
-        usecase "CU-309\nAprobar un cambio de tarifa" as CU309
-        usecase "CU-310\nConfigurar la tabla de tarifas\npor rangos" as CU310
+        usecase "Preparar la revisión anual\nde tarifas" as CU307
+        usecase "Registrar la facturación anual\nde un cliente" as CU308
+        usecase "Aprobar un cambio de tarifa" as CU309
+        usecase "Configurar la tabla de tarifas\npor rangos" as CU310
 
         ' Catálogo de conceptos (FR12)
-        usecase "CU-311\nGestionar el catálogo\nde conceptos" as CU311
+        usecase "Gestionar el catálogo\nde conceptos" as CU311
     }
 
     ' Caso de uso del bloque 4 que se reutiliza en el alta
-    usecase "CU-404\nAplicar prorrateos y promociones\n(bloque 4)" as CU404
+    usecase "Aplicar prorrateos y promociones\n(bloque 4)" as CU404
 }
 
 ' --- RELACIONES ---

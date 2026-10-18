@@ -17,23 +17,23 @@ rectangle "Sistema interno de facturación y cobros de Turbine" {
     package "Bloque 2: Gestión de clientes y contactos" {
 
         ' Clientes (FR4)
-        usecase "CU-201\nDar de alta un cliente" as CU201
-        usecase "CU-202\nModificar la ficha del cliente" as CU202
+        usecase "Dar de alta un cliente" as CU201
+        usecase "Modificar la ficha del cliente" as CU202
 
         ' Personas de contacto (FR5)
-        usecase "CU-203\nGestionar personas de contacto" as CU203
-        usecase "CU-204\nDesactivar un contacto\nconservando su historial" as CU204
-        usecase "CU-205\nAvisar del único contacto\nde facturación" as CU205
+        usecase "Gestionar personas de contacto" as CU203
+        usecase "Desactivar un contacto\nconservando su historial" as CU204
+        usecase "Avisar del único contacto\nde facturación" as CU205
 
         ' Ciclo de vida (FR6)
-        usecase "CU-206\nGestionar el estado del cliente" as CU206
-        usecase "CU-207\nFusionar clientes duplicados" as CU207
+        usecase "Gestionar el estado del cliente" as CU206
+        usecase "Fusionar clientes duplicados" as CU207
 
         ' Importación (FR7)
-        usecase "CU-208\nImportar clientes desde CSV" as CU208
+        usecase "Importar clientes desde CSV" as CU208
 
         ' Historial (FR8)
-        usecase "CU-209\nConsultar el historial del cliente" as CU209
+        usecase "Consultar el historial del cliente" as CU209
     }
 }
 

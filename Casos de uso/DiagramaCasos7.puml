@@ -1,4 +1,6 @@
 @startuml
+left to right direction
+skinparam packageStyle rectangle
 
 ' --- ACTORES ---
 actor "Usuario" as user
@@ -11,33 +13,37 @@ actor "Sistema" as system
 user <|-- admin
 admin <|-- superadmin
 
-' --- CASOS DE USO ---
+rectangle "Sistema interno de facturación y cobros de Turbine" {
 
-' Operativa diaria (FR28)
-usecase "Consultar tareas pendientes" as tareas
-usecase "Buscar clientes y facturas" as buscar
+    package "Bloque 7: Operativa diaria, informes, configuración y API" {
 
-' Operaciones masivas (FR29)
-usecase "Ejecutar acciones masivas" as accionesMasivas
-usecase "Transferir cliente\n(del Bloque 1)" as transferirExt
+        ' Operativa diaria (FR28)
+        usecase "Consultar tareas pendientes" as tareas
+        usecase "Buscar clientes y facturas" as buscar
 
-' Panel e informes (FR30)
-usecase "Consultar panel financiero" as panel
-usecase "Desglosar métricas (Drill-down)" as drilldown
-usecase "Configurar objetivos de facturación" as objetivos
-usecase "Generar y exportar informes/paquetes" as informes
-usecase "Programar informes periódicos" as programar
+        ' Operaciones masivas (FR29)
+        usecase "Ejecutar acciones masivas" as accionesMasivas
+        usecase "Transferir cliente\n(del Bloque 1)" as transferirExt
 
-' Configuración de empresa (FR31)
-usecase "Modificar datos fiscales" as datosFiscales
-usecase "Configurar parámetros globales" as paramsGlobales
+        ' Panel e informes (FR30)
+        usecase "Consultar panel financiero" as panel
+        usecase "Desglosar métricas (Drill-down)" as drilldown
+        usecase "Configurar objetivos de facturación" as objetivos
+        usecase "Generar y exportar informes/paquetes" as informes
+        usecase "Programar informes periódicos" as programar
 
-' API (FR32)
-usecase "Consultar deudas vía API" as consultarDeudaAPI
+        ' Configuración de empresa (FR31)
+        usecase "Modificar datos fiscales" as datosFiscales
+        usecase "Configurar parámetros globales" as paramsGlobales
 
-' Procesos automáticos (FR33)
-usecase "Monitorizar estado del sistema" as monitorizar
-usecase "Ejecutar procesos en segundo plano" as segundoPlano
+        ' API (FR32)
+        usecase "Consultar deudas vía API" as consultarDeudaAPI
+
+        ' Procesos automáticos (FR33)
+        usecase "Monitorizar estado del sistema" as monitorizar
+        usecase "Ejecutar procesos en segundo plano" as segundoPlano
+    }
+}
 
 ' --- RELACIONES ---
 
@@ -64,6 +70,6 @@ superadmin -- paramsGlobales
 
 ' Actores no humanos
 api -- consultarDeudaAPI
-system-- segundoPlano
+system -- segundoPlano
 
 @enduml

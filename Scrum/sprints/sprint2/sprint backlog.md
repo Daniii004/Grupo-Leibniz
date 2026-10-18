@@ -8,7 +8,7 @@
 
 ### De usuario -> Victor
 
-## Cambiar formato requisitos no funcinales a formato plantilla proporcionada -> Javi
+## Cambiar formato requisitos no funcionales a formato plantilla proporcionada -> Javi
 
 ## Casos de uso - Reparto en 7 grupos como RF
 
