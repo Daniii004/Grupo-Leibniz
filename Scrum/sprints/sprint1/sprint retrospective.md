@@ -2,7 +2,7 @@
 
 ## ¿Qué salió bien?
 
-Se consiguieron terminar varias tareas del sprint backlog. Hemos usado un grupo de Whasapp y reuniones de Microsoft teams para la comunicación.
+Se consiguieron terminar varias tareas del sprint backlog. Hemos usado un grupo de Whatsapp y reuniones de Microsoft teams para la comunicación.
 
 ## ¿Qué salió mal o supuso un obstáculo?
 
