@@ -1,0 +1,27 @@
+@startuml
+
+'https://plantuml.com/class-diagram
+'PRUEBA
+hide circle
+entity "Usuario" as usuario {
+    * id : INT <<PK>>
+    --
+    * rol : VARCHAR(11)
+
+}
+entity "AsignacionDeCliente" as AsignacionDeCliente {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * idCliente : INT <<FK>>
+}
+entity "Cliente" as cliente {
+    * id : INT <<PK>>
+    --
+    * correo : VARCHAR(70)
+    * eliminado : BOOL
+}
+
+usuario ||---o{AsignacionDeCliente
+AsignacionDeCliente}o---|| cliente
+@enduml
