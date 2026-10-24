@@ -1,5 +1,5 @@
 @startuml
-
+skinparam linetype ortho
 'https://plantuml.com/class-diagram
 'PRUEBA
 hide circle
@@ -22,6 +22,23 @@ entity "Cliente" as cliente {
     * eliminado : BOOL
 }
 
-usuario ||---o{AsignacionDeCliente
-AsignacionDeCliente}o---|| cliente
+usuario ||---o{AsignacionDeCliente : Tiene Asignado >
+AsignacionDeCliente}o---|| cliente : Está asignado a <
+
+entity "IncidenciaInterna" as incidenciaInterna{
+    * id : INT <<PK>>
+    --
+    * textoIncidencia : VARCHAR(500)
+    * idUsuario : INT <<FK>>
+}
+entity "Comentario" as comentario{
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * idIncidencia : INT <<FK>>
+    * texto : VARCHAR(500)
+}
+usuario ||--right--o{ comentario : realiza >
+usuario ||--o{ incidenciaInterna : pone >
+comentario }o--|| incidenciaInterna : pertenece a >
 @enduml
