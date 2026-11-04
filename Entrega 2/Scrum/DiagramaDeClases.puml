@@ -1,0 +1,20 @@
+@startuml
+'https://plantuml.com/class-diagram
+skinparam linetype ortho
+
+abstract class Usuario
+{
+   - Cliente[] listaClientes
+   + getClientes()
+}
+class Lector extends Usuario
+class Administrador extends Lector {
+    + asignarCliente(Lector,Cliente)
+
+}
+class SuperAdministrador extends Administrador
+class Cliente
+Usuario o-- Cliente
+Administrador ..> Usuario
+Administrador ..> Cliente
+@enduml
