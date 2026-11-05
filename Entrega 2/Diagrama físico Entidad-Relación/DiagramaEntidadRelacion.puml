@@ -1,0 +1,120 @@
+@startuml
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+hide circle
+
+' ==========================================
+' BLOQUE RBAC (Control de Acceso)
+' ==========================================
+entity "Rol" as rol {
+  * id : INT <<PK>>
+  --
+  * nombre : VARCHAR(50) <<UNIQUE>>
+  * descripcion : VARCHAR(255)
+  * idRolPadre : INT <<FK>>
+}
+
+entity "Permiso" as permiso {
+  * id : INT <<PK>>
+  --
+  * codigo : VARCHAR(50) <<UNIQUE>>
+  * descripcion : VARCHAR(255)
+}
+
+entity "PermisosDeRol" as rolPermiso {
+  * idRol : INT <<PK, FK>>
+  * idPermiso : INT <<PK, FK>>
+}
+
+entity "UsuarioPermiso" as usuarioPermiso {
+  * idUsuario : INT <<PK, FK>>
+  * idPermiso : INT <<PK, FK>>
+  --
+  * concedido : BOOL
+  * fecha : DATE
+  * idConcedidoPor : INT <<FK>>
+}
+
+' ==========================================
+' BLOQUE NÚCLEO (Usuarios y Clientes)
+' ==========================================
+entity "Usuario" as usuario {
+  * id : INT <<PK>>
+  --
+  * idRol : INT <<FK>>
+  * nombre : VARCHAR(100)
+  * email : VARCHAR(100)
+  * hashContrasena : VARCHAR(255)
+  * activo : BOOL
+  * fechaAlta : DATE
+}
+
+entity "AsignacionDeCliente" as asignacion {
+  * id : INT <<PK>>
+  --
+  * idUsuario : INT <<FK>>
+  * idCliente : INT <<FK>>
+  * idTitularOriginal : INT <<FK>>
+  * tipo : VARCHAR(20)
+  * fechaInicio : DATE
+  * fechaFin : DATE
+}
+
+entity "Cliente" as cliente {
+  * id : INT <<PK>>
+  --
+  * correo : VARCHAR(70)
+  * eliminado : BOOL
+}
+
+' ==========================================
+' BLOQUE INCIDENCIAS
+' ==========================================
+entity "IncidenciaInterna" as incidenciaInterna {
+  * id : INT <<PK>>
+  --
+  * idUsuario : INT <<FK>>
+  * textoIncidencia : VARCHAR(500)
+}
+
+entity "Comentario" as comentario {
+  * id : INT <<PK>>
+  --
+  * idUsuario : INT <<FK>>
+  * idIncidencia : INT <<FK>>
+  * texto : VARCHAR(500)
+}
+
+' ==========================================
+' RELACIONES RBAC
+' ==========================================
+' Herencia recursiva entre roles (un rol puede heredar de otro)
+rol |o--o{ rol : "hereda de >"
+
+' Relación N:M entre Rol y Permiso
+rol ||-right-o{ rolPermiso
+permiso ||-left-o{ rolPermiso
+
+' Relación de Usuario con su Rol principal
+rol ||-down-o{ usuario : "define >"
+
+' Relación N:M de excepciones de permisos por usuario
+usuario ||-up-o{ usuarioPermiso : "tiene excepción >"
+permiso ||-down-o{ usuarioPermiso
+usuario ||--o{ usuarioPermiso : "concedido por >"
+
+' ==========================================
+' RELACIONES OPERACIONALES
+' ==========================================
+' Asignaciones de clientes empujadas a la izquierda
+usuario ||-left-o{ asignacion : "responsable actual >"
+usuario |o-up-o{ asignacion : "titular original >"
+asignacion }o-down-|| cliente : "< asignado a"
+
+' Incidencias empujadas hacia abajo y comentarios a la derecha
+usuario ||-down-o{ incidenciaInterna : "pone >"
+usuario ||-right-o{ comentario : "realiza >"
+incidenciaInterna ||-right-o{ comentario : "< pertenece a"
+
+@enduml
