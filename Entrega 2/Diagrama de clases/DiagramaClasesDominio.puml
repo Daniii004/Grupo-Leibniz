@@ -1,0 +1,926 @@
+@startuml DiagramaClasesDominio
+
+title Diagrama de clases (1/2): modelo de dominio - Sistema interno de facturación y cobros de Turbine
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam shadowing false
+set namespaceSeparator none
+hide empty members
+
+' =====================================================================
+' BLOQUE 1: USUARIOS, ROLES Y ASIGNACIONES (FR1, FR2, FR3)
+' =====================================================================
+package "1. Usuarios, roles y asignaciones" {
+
+    ' Solo identidad y credenciales: las operaciones de los casos de uso
+    ' están en los servicios (DiagramaClasesServicios.puml).
+    class Usuario {
+        - id : Long
+        - nombre : String
+        - email : String
+        - hashContrasena : String
+        - activo : boolean
+        - fechaAlta : DateTime
+        --
+        + tienePermiso(codigo : String) : boolean
+        + getPermisosEfectivos() : Set<Permiso>
+        + asignarRol(r : Rol) : void
+        + concederPermiso(p : Permiso) : void
+        + retirarPermiso(p : Permiso) : void
+        + desactivar() : void
+        + cambiarContrasena(actual : String, nueva : String) : void
+    }
+
+    ' Los roles son datos, no clases: LECTOR, ADMINISTRADOR y
+    ' SUPERADMINISTRADOR son instancias de Rol (FR3).
+    class Rol {
+        - id : Long
+        - nombre : String
+        - descripcion : String
+        --
+        + getPermisosEfectivos() : Set<Permiso>
+        + incluye(p : Permiso) : boolean
+    }
+
+    class Permiso {
+        - codigo : String
+        - descripcion : String
+    }
+
+    ' Excepción por usuario: concede o retira un permiso
+    ' respecto a lo que da su rol (FR1.6, RU-30).
+    class PermisoIndividual {
+        - concedido : boolean
+        - fecha : DateTime
+    }
+
+    class Sesion {
+        - token : String
+        - inicio : DateTime
+        - ultimaActividad : DateTime
+        - activa : boolean
+        --
+        + registrarActividad() : void
+        + haExpirado(minutosInactividad : int) : boolean
+        + cerrar() : void
+    }
+
+    class TokenRestablecimiento {
+        - token : String
+        - fechaCaducidad : DateTime
+        - usado : boolean
+        --
+        + esValido() : boolean
+    }
+
+    enum TipoAsignacion {
+        PRINCIPAL
+        TEMPORAL
+    }
+
+    class AsignacionCliente {
+        - fechaInicio : Date
+        - fechaFin : Date [0..1]
+        - tipo : TipoAsignacion
+        - activa : boolean
+        --
+        + estaVigente(fecha : Date) : boolean
+        + finalizar() : void
+    }
+}
+
+note right of Rol
+  RBAC jerárquico (FR3): un rol tiene sus permisos
+  más los del rol del que hereda (heredaDe).
+  - LECTOR: VER_CLIENTES_ASIGNADOS, CREAR_FACTURA,
+    CONCILIAR_COBRO, CREAR_INCIDENCIA...
+  - ADMINISTRADOR heredaDe LECTOR: VER_TODOS_LOS_CLIENTES,
+    ASIGNAR_CLIENTES, APROBAR_SOLICITUDES, CERRAR_PERIODO...
+  - SUPERADMINISTRADOR heredaDe ADMINISTRADOR:
+    CONFIGURAR_SISTEMA, GESTIONAR_TARIFAS, REABRIR_PERIODO,
+    APROBAR_OPERACIONES_CRITICAS...
+  Usuario.tienePermiso() mira primero si hay un
+  PermisoIndividual y, si no, los permisos efectivos del rol.
+  {debe existir al menos un usuario activo con
+  rol SUPERADMINISTRADOR} (ACT-01)
+end note
+
+' =====================================================================
+' BLOQUE 2: CLIENTES Y CONTACTOS (FR4 - FR8)
+' =====================================================================
+package "2. Clientes y contactos" {
+
+    enum EstadoCliente {
+        PENDIENTE_ACTIVACION
+        ACTIVO
+        PAUSADO
+        BAJA_SOLICITADA
+        BAJA
+        BLOQUEADO
+    }
+
+    enum RolContacto {
+        COMERCIAL
+        ADMINISTRACION
+        COBROS
+        FACTURACION
+        GESTOR_EXTERNO
+    }
+
+    enum CanalComunicacion {
+        EMAIL
+        TELEFONO
+        WHATSAPP
+    }
+
+    class Cliente {
+        - id : Long
+        - estado : EstadoCliente
+        - moneda : String
+        - fechaAlta : Date
+        --
+        + cambiarEstado(nuevo : EstadoCliente) : void
+        + consecuenciasCambioEstado(nuevo : EstadoCliente) : List<String>
+        + tieneDatosFiscalesCompletos() : boolean
+        + datosFiscalesFaltantes() : List<String>
+        + getContactosFacturacion() : List<PersonaContacto>
+        + getHistorial() : List<EventoHistorial>
+        + fusionarCon(duplicado : Cliente) : void
+        + calcularDeudaPendiente() : Decimal
+    }
+
+    class DatosComerciales {
+        - nombre : String
+        - sector : String
+        - ubicacion : String
+        - etiquetas : List<String>
+    }
+
+    ' Se reutiliza para los clientes y para la entidad emisora (FR31.1).
+    ' Formato no atado al español: sin provincia obligatoria (FR4.2).
+    class DatosFiscales {
+        - razonSocial : String
+        - identificadorFiscal : String
+        - domicilio : String
+        - codigoPostal : String
+        - ciudad : String
+        - pais : String
+        - idioma : String
+        --
+        + estanCompletos() : boolean
+    }
+
+    class PersonaContacto {
+        - id : Long
+        - nombre : String
+        - email : String
+        - telefono : String
+        - canales : List<CanalComunicacion>
+        - activo : boolean
+        --
+        + desactivar() : void
+    }
+
+    class VinculoContacto {
+        - rol : RolContacto
+        - activo : boolean
+    }
+
+    class EventoHistorial {
+        - fecha : DateTime
+        - tipo : String
+        - descripcion : String
+    }
+
+    class ImportacionCSV {
+        - nombreArchivo : String
+        - mapeoColumnas : Map<String, String>
+        - soloFilasValidas : boolean
+        --
+        + previsualizar() : List<String>
+        + detectarNIFDuplicados() : List<String>
+        + ejecutar() : InformeImportacion
+    }
+
+    class InformeImportacion {
+        - importados : int
+        - errores : List<String>
+    }
+}
+
+' =====================================================================
+' BLOQUE 3: SUSCRIPCIONES, TARIFAS Y CATÁLOGO (FR9 - FR12, FR15)
+' =====================================================================
+package "3. Suscripciones, tarifas y catálogo" {
+
+    enum EstadoSuscripcion {
+        PENDIENTE_ACTIVACION
+        ACTIVA
+        PAUSADA
+        BAJA
+    }
+
+    enum TipoPromocion {
+        PRIMER_MES_GRATIS
+        COBRO_DESDE_MES_SIGUIENTE
+        DESCUENTO_TEMPORAL
+    }
+
+    enum EstadoRevision {
+        PENDIENTE_DATO
+        PENDIENTE_APROBACION
+        APROBADA
+        RECHAZADA
+    }
+
+    class Suscripcion {
+        - id : Long
+        - plan : String
+        - fechaInicio : Date
+        - fechaBaja : Date [0..1]
+        - cuotaMensual : Decimal
+        - plazoPagoDias : int
+        - estado : EstadoSuscripcion
+        - motivoPausa : String [0..1]
+        - fechaReactivacionPrevista : Date [0..1]
+        --
+        + activar() : void
+        + pausar(motivo : String, reactivacion : Date) : void
+        + reanudar() : void
+        + darDeBaja(fechaEfectiva : Date) : void
+        + calcularProrrateo(mes : Date) : Decimal
+        + aplicarPromociones(importe : Decimal, mes : Date) : Decimal
+        + generarFacturaMensual(mes : Date) : Factura
+    }
+
+    class LineaSuscripcion {
+        - cantidad : int
+        - precioPactado : Decimal
+    }
+
+    class Promocion {
+        - tipo : TipoPromocion
+        - porcentaje : Decimal
+        - fechaInicio : Date
+        - fechaCaducidad : Date [0..1]
+        --
+        + estaVigente(fecha : Date) : boolean
+    }
+
+    class Concepto {
+        - id : Long
+        - nombre : String
+        - descripcion : String
+        - precioReferencia : Decimal
+        - activo : boolean
+    }
+
+    class Impuesto {
+        - nombre : String
+        - porcentaje : Decimal
+    }
+
+    class TablaTarifas {
+        - fechaEfecto : Date
+        --
+        + obtenerRango(facturacionAnual : Decimal) : RangoTarifa
+    }
+
+    class RangoTarifa {
+        - minimo : Decimal
+        - maximo : Decimal
+        - precio : Decimal
+    }
+
+    class RevisionAnual {
+        - anio : int
+        - facturacionAnual : Decimal [0..1]
+        - fuenteDato : String [0..1]
+        - fechaDato : Date [0..1]
+        - precioAnterior : Decimal
+        - precioNuevo : Decimal [0..1]
+        - estado : EstadoRevision
+        - fechaAprobacion : DateTime [0..1]
+        --
+        + registrarFacturacion(importe : Decimal, fuente : String, fecha : Date) : void
+        + sugerirPrecio(t : TablaTarifas) : Decimal
+        + aprobar(aprobador : Usuario) : void
+        + rechazar(aprobador : Usuario) : void
+    }
+}
+
+' =====================================================================
+' BLOQUE 4: PRESUPUESTOS, FACTURACIÓN Y CICLO DOCUMENTAL (FR13 - FR20)
+' =====================================================================
+package "4. Presupuestos y facturación" {
+
+    enum EstadoPresupuesto {
+        BORRADOR
+        ENVIADO
+        ACEPTADO
+        RECHAZADO
+        FACTURADO
+    }
+
+    enum EstadoFactura {
+        BORRADOR
+        PENDIENTE_APROBACION
+        APROBADA
+        EMITIDA
+        ENVIADA
+        EN_DISPUTA
+        VENCIDA
+        PARCIALMENTE_CONCILIADA
+        PAGADA
+        ANULADA
+        INCOBRABLE
+        RECTIFICADA
+    }
+
+    enum TipoFactura {
+        PUNTUAL
+        RECURRENTE
+        RECTIFICATIVA
+        MIGRADA
+    }
+
+    enum TipoPeriodo {
+        MENSUAL
+        TRIMESTRAL
+    }
+
+    enum TipoOperacion {
+        FACTURA_CONDICIONES_ESPECIALES
+        DESCUENTO_SUPERIOR_UMBRAL
+        RECTIFICATIVA
+        DEUDA_INCOBRABLE
+    }
+
+    enum EstadoAprobacion {
+        PENDIENTE
+        APROBADA
+        RECHAZADA
+    }
+
+    abstract class DocumentoComercial {
+        # id : Long
+        # fechaCreacion : DateTime
+        --
+        + agregarLinea(c : Concepto, cantidad : Decimal) : LineaDocumento
+        + calcularBaseImponible() : Decimal
+        + calcularImpuestos() : Decimal
+        + calcularTotal() : Decimal
+    }
+
+    ' Copia los datos del concepto: los cambios en el catálogo
+    ' no alteran documentos ya creados (FR12.2).
+    class LineaDocumento {
+        - descripcion : String
+        - cantidad : Decimal
+        - precioUnitario : Decimal
+        - descuento : Decimal
+        - porcentajeIVA : Decimal
+        --
+        + calcularSubtotal() : Decimal
+    }
+
+    class Presupuesto {
+        - estado : EstadoPresupuesto
+        - fechaValidez : Date
+        - fechaRespuesta : Date [0..1]
+        --
+        + aceptar(evidencia : Adjunto) : void
+        + rechazar() : void
+        + convertirEnFactura() : Factura
+    }
+
+    class Factura {
+        - numero : String [0..1]
+        - fechaEmision : Date [0..1]
+        - fechaVencimiento : Date
+        - estado : EstadoFactura
+        - tipo : TipoFactura
+        - importePendiente : Decimal
+        - seguimientoPausado : boolean
+        - motivoPausa : String [0..1]
+        - fechaRevisionPausa : Date [0..1]
+        --
+        + validar() : List<String>
+        + previsualizar() : DocumentoPDF
+        + requiereAprobacion() : boolean
+        + emitir(serie : SerieFacturacion) : void
+        + generarPDF() : DocumentoPDF
+        + esEditable() : boolean
+        + eliminarBorrador() : void
+        + marcarEnDisputa(motivo : String, revision : Date) : void
+        + pausarSeguimiento(motivo : String, revision : Date) : void
+        + reanudarSeguimiento() : void
+        + actualizarImportePendiente() : void
+        + rectificar(motivo : String) : FacturaRectificativa
+        + solicitarIncobrable(motivo : String) : SolicitudAprobacion
+    }
+
+    class FacturaRectificativa {
+        - motivo : String
+    }
+
+    class SerieFacturacion {
+        - prefijo : String
+        - anio : int
+        - ultimoNumero : int
+        - activa : boolean
+        --
+        + siguienteNumero() : String
+    }
+
+    ' Copia inalterable de la factura tal como se emitió (FR18.4).
+    class DocumentoPDF {
+        - rutaArchivo : String
+        - hash : String
+        - fechaGeneracion : DateTime
+        - destinatarios : List<String>
+    }
+
+    class CategoriaProyecto {
+        - nombre : String
+        - activa : boolean
+        --
+        + renombrar(nombre : String) : void
+    }
+
+    class PeriodoAdministrativo {
+        - anio : int
+        - numero : int
+        - tipo : TipoPeriodo
+        - cerrado : boolean
+        - fechaCierre : DateTime [0..1]
+        - motivoReapertura : String [0..1]
+        --
+        + cerrar(u : Usuario) : void
+        + reabrir(u : Usuario, motivo : String) : void
+        + contiene(fecha : Date) : boolean
+    }
+
+    class SolicitudAprobacion {
+        - id : Long
+        - tipoOperacion : TipoOperacion
+        - motivo : String
+        - estado : EstadoAprobacion
+        - comentarioAprobador : String [0..1]
+        - fechaSolicitud : DateTime
+        - fechaResolucion : DateTime [0..1]
+        --
+        + aprobar(aprobador : Usuario, comentario : String) : void
+        + rechazar(aprobador : Usuario, comentario : String) : void
+        + reasignar(nuevoAprobador : Usuario) : void
+    }
+}
+
+' =====================================================================
+' BLOQUE 5: COBROS Y CONCILIACIÓN (FR21 - FR24)
+' =====================================================================
+package "5. Cobros y conciliación" {
+
+    enum OrigenCobro {
+        STRIPE
+        REVOLUT
+        BANCO
+        MANUAL
+    }
+
+    enum EstadoCobro {
+        PENDIENTE_CONCILIACION
+        CONCILIADO
+        PARCIALMENTE_APLICADO
+        ANULADO
+    }
+
+    class Cobro {
+        - id : Long
+        - idExterno : String {unique}
+        - origen : OrigenCobro
+        - importe : Decimal
+        - referencia : String [0..1]
+        - fechaValor : Date
+        - estado : EstadoCobro
+        --
+        + importeSinAplicar() : Decimal
+    }
+
+    ' Registra qué movimiento y qué regla o usuario justificó el pago (FR21.4).
+    class Conciliacion {
+        - importeAplicado : Decimal
+        - fecha : DateTime
+        - reglaAplicada : String [0..1]
+        - anulada : boolean
+        - motivoAnulacion : String [0..1]
+        --
+        + anular(u : Usuario, motivo : String) : void
+    }
+}
+
+' =====================================================================
+' BLOQUE 6: COMUNICACIONES, NOTIFICACIONES E INCIDENCIAS (FR25 - FR27)
+' =====================================================================
+package "6. Comunicaciones e incidencias" {
+
+    enum TipoPlantilla {
+        ENVIO_FACTURA
+        RECORDATORIO_PREVIO
+        AVISO_VENCIMIENTO
+        AVISO_IMPAGO
+    }
+
+    enum EstadoEnvio {
+        EN_COLA
+        ENVIADO
+        ENTREGADO
+        FALLIDO
+        REINTENTADO
+    }
+
+    enum EstadoTarea {
+        PENDIENTE
+        ATENDIDA
+        RESUELTA
+    }
+
+    enum EstadoIncidencia {
+        ABIERTA
+        EN_CURSO
+        CERRADA
+    }
+
+    enum Prioridad {
+        BAJA
+        MEDIA
+        ALTA
+    }
+
+    enum TipoAdjunto {
+        CONTRATO
+        PRESUPUESTO_ACEPTADO
+        JUSTIFICANTE_PAGO
+        ORDEN_PEDIDO
+        OTRO
+    }
+
+    class Plantilla {
+        - id : Long
+        - nombre : String
+        - tipo : TipoPlantilla
+        - idioma : String
+        --
+        + nuevaVersion(asunto : String, cuerpo : String) : VersionPlantilla
+        + versionActual() : VersionPlantilla
+    }
+
+    class VersionPlantilla {
+        - numero : int
+        - asunto : String
+        - cuerpo : String
+        - fecha : DateTime
+        --
+        + rellenar(c : Cliente, f : Factura) : String
+        + variablesFaltantes() : List<String>
+    }
+
+    class Envio {
+        - id : Long
+        - fecha : DateTime
+        - canal : CanalComunicacion
+        - destinatario : String
+        - estado : EstadoEnvio
+        - esReintento : boolean
+        - modoPrueba : boolean
+        --
+        + actualizarEstado(nuevo : EstadoEnvio) : void
+        + reintentar(alternativo : PersonaContacto) : Envio
+    }
+
+    ' Envío periódico del PDF de una factura (FR23.4).
+    class EnvioProgramado {
+        - frecuencia : String
+        - proximoEnvio : DateTime
+        - activo : boolean
+        --
+        + calcularSiguiente() : DateTime
+        + desactivar() : void
+    }
+
+    class Notificacion {
+        - id : Long
+        - tipo : String
+        - mensaje : String
+        - fecha : DateTime
+        - leida : boolean
+        --
+        + marcarLeida() : void
+    }
+
+    class Tarea {
+        - id : Long
+        - descripcion : String
+        - estado : EstadoTarea
+        - fechaLimite : Date [0..1]
+        --
+        + atender() : void
+        + resolver() : void
+    }
+
+    class PreferenciasNotificacion {
+        - enPlataforma : boolean
+        - porEmail : boolean
+        - resumenDiario : boolean
+    }
+
+    class IncidenciaInterna {
+        - id : Long
+        - titulo : String
+        - tipo : String
+        - descripcion : String
+        - estado : EstadoIncidencia
+        - prioridad : Prioridad
+        - afectaCobro : boolean
+        - resolucion : String [0..1]
+        - fechaCreacion : DateTime
+        --
+        + asignarResponsable(u : Usuario) : void
+        + comentar(autor : Usuario, texto : String, restringido : boolean) : Comentario
+        + cerrar(resolucion : String) : void
+    }
+
+    class Comentario {
+        - id : Long
+        - texto : String
+        - fecha : DateTime
+        - restringido : boolean
+        --
+        + extraerMenciones() : List<Usuario>
+        + esVisiblePara(u : Usuario) : boolean
+    }
+
+    interface Adjuntable {
+        + adjuntar(a : Adjunto) : void
+        + getAdjuntos() : List<Adjunto>
+    }
+
+    class Adjunto {
+        - id : Long
+        - nombreArchivo : String
+        - tipo : TipoAdjunto
+        - descripcion : String
+        - formato : String
+        - tamanoBytes : long
+        - ruta : String
+        - fechaSubida : DateTime
+        --
+        + validarFormatoYTamano() : boolean
+    }
+}
+
+' =====================================================================
+' BLOQUE 7: OPERATIVA, INFORMES, CONFIGURACIÓN Y API (FR28 - FR33)
+' =====================================================================
+package "7. Operativa, informes y configuración" {
+
+    enum FormatoExportacion {
+        PDF
+        CSV
+    }
+
+    enum EstadoEjecucion {
+        PENDIENTE
+        PROCESANDO
+        COMPLETADO
+        COMPLETADO_CON_ERRORES
+    }
+
+    class FiltroGuardado {
+        - nombre : String
+        - criterios : Map<String, String>
+    }
+
+    class AccionMasiva {
+        - tipo : String
+        - filtros : Map<String, String>
+        - numElementos : int
+        - confirmada : boolean
+        - fecha : DateTime
+        --
+        + previsualizar() : int
+        + confirmar() : void
+        + ejecutar() : String
+    }
+
+    class ObjetivoFacturacion {
+        - tipo : TipoPeriodo
+        - anio : int
+        - mes : int [0..1]
+        - importe : Decimal
+        --
+        + porcentajeAlcanzado() : Decimal
+    }
+
+    class TipoCambio {
+        - monedaOrigen : String
+        - monedaBase : String
+        - valor : Decimal
+        - fecha : Date
+    }
+
+    class Informe {
+        - tipo : String
+        - filtros : Map<String, String>
+        - formato : FormatoExportacion
+        - fechaGeneracion : DateTime
+        --
+        + generar() : void
+        + exportar() : Adjunto
+    }
+
+    class InformeProgramado {
+        - frecuencia : String
+        - proximaEjecucion : DateTime
+        --
+        + ejecutar() : Informe
+    }
+
+    class PaqueteGestoria {
+        - version : int
+        - fechaGeneracion : DateTime
+        --
+        + generar() : void
+    }
+
+    class EntidadEmisora {
+        - monedaPredeterminada : String
+        - logo : String
+    }
+
+    class ConfiguracionSistema <<singleton>> {
+        - plazoPagoDefectoDias : int
+        - diaRecordatorioPrevio : int
+        - diaVencimiento : int
+        - cadenciaImpagoDias : int
+        - dominioCorreo : String
+        - minutosInactividadSesion : int
+        - umbralImporteAlto : Decimal
+        - umbralDescuento : Decimal
+        - monedas : List<String>
+        - reactivacionRequiereConfirmacion : boolean
+        --
+        + validar() : List<String>
+    }
+
+    class CredencialAPI {
+        - id : Long
+        - hashClave : String
+        - activa : boolean
+        - limitePeticionesMinuto : int
+        --
+        + validar(clave : String) : boolean
+    }
+
+    ' Pista de auditoría no editable (RU-13).
+    class RegistroAuditoria {
+        - id : Long
+        - fecha : DateTime
+        - accion : String
+        - entidad : String
+        - idEntidad : Long
+        - detalle : String
+    }
+
+    class EjecucionProceso {
+        - tipo : String
+        - inicio : DateTime
+        - fin : DateTime [0..1]
+        - estado : EstadoEjecucion
+        - procesados : int
+        - fallidos : int
+        - errores : List<String>
+        --
+        + registrarError(elemento : String, motivo : String) : void
+    }
+}
+
+' =====================================================================
+' RELACIONES
+' =====================================================================
+
+' --- Bloque 1 ---
+Usuario "0..*" --> "1" Rol : tiene >
+Rol "0..*" --> "0..1" Rol : heredaDe
+Rol "0..*" -- "0..*" Permiso : incluye >
+Usuario "0..*" -- "0..*" Permiso : excepciones
+(Usuario, Permiso) .. PermisoIndividual
+PermisoIndividual "0..*" --> "1" Usuario : concedidoPor
+Usuario "1" *-- "0..*" Sesion
+Usuario "1" *-- "0..*" TokenRestablecimiento
+Usuario "1" -- "0..*" AsignacionCliente : responsable
+AsignacionCliente "0..*" -- "1" Cliente : asigna >
+AsignacionCliente "0..*" --> "0..1" Usuario : titularOriginal
+
+' --- Bloque 2 ---
+Cliente "1" *-- "1" DatosComerciales
+Cliente "1" *-- "1" DatosFiscales
+Cliente "0..*" -- "0..*" PersonaContacto : contactos
+(Cliente, PersonaContacto) .. VinculoContacto
+Cliente "1" *-- "0..*" EventoHistorial : historial
+ImportacionCSV "1" *-- "0..1" InformeImportacion
+ImportacionCSV "0..*" --> "0..*" Cliente : crea >
+Usuario "0..*" -- "0..*" Cliente : favoritos >
+
+' --- Bloque 3 ---
+Cliente "1" -- "0..*" Suscripcion : contrata >
+Suscripcion "0..*" --> "1" Usuario : gestorResponsable
+Suscripcion "1" *-- "1..*" LineaSuscripcion
+LineaSuscripcion "0..*" --> "1" Concepto
+Concepto "0..*" --> "1" Impuesto : impuestoPorDefecto
+Suscripcion "1" *-- "0..*" Promocion
+TablaTarifas "1" *-- "1..*" RangoTarifa
+Suscripcion "1" -- "0..*" RevisionAnual : revisiones
+RevisionAnual "0..*" --> "1" TablaTarifas : seCalculaCon
+RevisionAnual "0..*" --> "0..1" Usuario : aprobadaPor
+
+' --- Bloque 4 ---
+DocumentoComercial <|-- Presupuesto
+DocumentoComercial <|-- Factura
+Factura <|-- FacturaRectificativa
+DocumentoComercial "1" *-- "1..*" LineaDocumento
+LineaDocumento "0..*" --> "0..1" Concepto : basadaEn
+DocumentoComercial "0..*" --> "1" Cliente : para
+DocumentoComercial "0..*" --> "1" Usuario : creadoPor
+Presupuesto "0..1" -- "0..1" Factura : seConvierteEn >
+Factura "0..*" --> "0..1" Suscripcion : generadaPor
+FacturaRectificativa "0..*" --> "1" Factura : rectifica
+Factura "0..*" --> "0..1" SerieFacturacion : numeradaEn
+Factura "1" *-- "0..1" DocumentoPDF : copiaInalterable
+Factura "0..*" --> "0..1" CategoriaProyecto
+Factura "0..*" --> "0..1" PeriodoAdministrativo : perteneceA
+Factura "1" -- "0..*" SolicitudAprobacion : aprobaciones
+SolicitudAprobacion "0..*" --> "1" Usuario : solicitante
+SolicitudAprobacion "0..*" --> "0..1" Usuario : aprobador
+
+note bottom of SolicitudAprobacion
+  {solicitante <> aprobador}
+  Separación de funciones (FR16.2): aplica a
+  cualquier rol, incluido el superadministrador.
+  El aprobador necesita APROBAR_SOLICITUDES; los descuentos
+  sobre el umbral y los incobrables requieren
+  APROBAR_OPERACIONES_CRITICAS (FR16.5, FR24.3).
+end note
+
+' --- Bloque 5 ---
+Cobro "0..*" -- "0..*" Factura : paga >
+(Cobro, Factura) .. Conciliacion
+Conciliacion "0..*" --> "0..1" Usuario : realizadaPor
+
+' --- Bloque 6 ---
+Plantilla "1" *-- "1..*" VersionPlantilla
+Envio "0..*" --> "1" VersionPlantilla : usa
+Envio "0..*" --> "0..1" Factura : sobre
+Envio "0..*" --> "0..1" PersonaContacto : destinatario
+Envio "0..1" -- "0..*" Envio : reintentos
+EnvioProgramado "0..*" --> "1" Factura : de
+EnvioProgramado "0..*" --> "1..*" PersonaContacto : destinatarios
+EnvioProgramado "1" -- "0..*" Envio : genera >
+EnvioProgramado "0..*" --> "1" Usuario : programadoPor
+Usuario "1" -- "0..*" Notificacion : recibe >
+Usuario "1" -- "0..*" Tarea : responsable
+Usuario "1" *-- "1" PreferenciasNotificacion
+IncidenciaInterna "0..*" --> "0..1" Cliente : sobre
+IncidenciaInterna "0..*" --> "0..1" Factura : sobre
+IncidenciaInterna "0..1" --> "0..1" Envio : originadaPorRebote
+IncidenciaInterna "0..*" --> "1" Usuario : responsable
+IncidenciaInterna "1" *-- "0..*" Comentario
+Comentario "0..*" --> "1" Usuario : autor
+Comentario "0..*" --> "0..*" Usuario : menciona
+Adjuntable "1" o-- "0..*" Adjunto
+Adjuntable <|.. Cliente
+Adjuntable <|.. Suscripcion
+Adjuntable <|.. DocumentoComercial
+Adjuntable <|.. IncidenciaInterna
+
+' --- Bloque 7 ---
+Usuario "1" *-- "0..*" FiltroGuardado
+AccionMasiva "0..*" --> "1" Usuario : ejecutadaPor
+AccionMasiva "0..*" --> "1..*" Cliente : afecta
+InformeProgramado "1" -- "0..*" Informe : genera >
+InformeProgramado "0..*" --> "1..*" Usuario : destinatarios
+Informe <|-- PaqueteGestoria
+PaqueteGestoria "0..*" --> "1" PeriodoAdministrativo : cubre
+PaqueteGestoria "0..*" o-- "0..*" Factura
+PaqueteGestoria "0..*" o-- "0..*" Cobro
+EntidadEmisora "1" *-- "1" DatosFiscales
+ConfiguracionSistema "1" *-- "1" EntidadEmisora
+ConfiguracionSistema "1" o-- "1..*" SerieFacturacion
+ConfiguracionSistema "1" o-- "1..*" Impuesto
+ConfiguracionSistema "1" o-- "1..*" Plantilla
+ConfiguracionSistema "1" o-- "1..*" TablaTarifas
+RegistroAuditoria "0..*" --> "0..1" Usuario : autor
+RegistroAuditoria "0..*" --> "0..1" CredencialAPI : llamadaAPI
+
+@enduml
