@@ -1,53 +1,99 @@
 @startuml
-package "Interfaz de Usuario" {
+
+title Diagrama de Componentes - Turbine
+
+package "Capa de Presentación" {
     [Aplicación Web] as web
+    [Sistema Brain (Externo)] as brain
 }
 
-package "Gestión de Accesos" {
-    [Autenticación y Roles] as auth
+package "Módulo de Accesos" {
+    [Autenticación] as auth
+    [Gestión de Roles] as roles
 }
 
-package "Lógica de Negocio" {
-    [Gestión de Clientes] as clientes
-    [Facturación y Suscripciones] as fact
-    [Cobros y Conciliación] as cobros
-    [Comunicaciones] as notif
-    [Dashboard y Reportes] as reportes
+package "Módulo de Clientes" {
+    [Gestión de Fichas y Contactos] as clientes
+}
+
+package "Módulo Comercial" {
+    [Catálogo y Tarifas] as tarifas
+    [Suscripciones Recurrentes] as suscripciones
+}
+
+package "Módulo de Facturación" {
+    [Emisión de Facturas] as facturas
+}
+
+package "Módulo de Cobros" {
+    [Conciliación de Pagos] as cobros
+    [Gestión de Deuda e Impagos] as deuda
+}
+
+package "Módulo de Soporte" {
+    [Comunicaciones Externas] as comunicacion
+    [Incidencias Internas] as incidencias
+}
+
+package "Módulo de Control" {
+    [Reportes y Dashboard] as reportes
+    [API Gateway Externa] as api
 }
 
 package "Persistencia" {
-    [Base de Datos] as database
-    [Almacenamiento PDFs] as files
+    [Base de Datos] as db
 }
 
 package "Servicios Externos" {
-    [Pasarela Stripe] as stripe
+    [Pasarela de pago] as stripe
+    [Email / WhatsApp] as mail
 }
 
-' Conexiones desde la interfaz web a los módulos del backend
+' --- Conexiones de Frontend ---
 web -(0- auth : IAuth
 web -(0- clientes : IClientes
-web -(0- fact : IFacturacion
+web -(0- facturas : IFacturas
+web -(0- suscripciones : ISuscripciones
 web -(0- cobros : ICobros
 web -(0- reportes : IReportes
+web -(0- incidencias : IIncidencias
 
-' Conexiones internas de lógica de negocio
-fact -(0- clientes : IClientes
-cobros -(0- fact : IFacturacion
-fact -(0- notif : INotificaciones
-cobros -(0- notif : INotificaciones
+' --- Conexiones de la API ---
+brain -(0- api : IConsultaAPI
+api -(0- deuda : IDeuda
 
-' Conexiones a servicios externos
-cobros -(0- stripe : IPagosStripe
+' --- Conexiones Internas de Negocio ---
+' Seguridad
+auth -(0- roles : IRoles
 
-' Conexiones a persistencia (Base de Datos)
-auth -(0- database : IDatabase
-clientes -(0- database : IDatabase
-fact -(0- database : IDatabase
-cobros -(0- database : IDatabase
-reportes -(0- database : IDatabase
-notif -(0- database : IDatabase
+' Comercial
+suscripciones -(0- tarifas : ITarifas
+suscripciones -(0- clientes : IClientes
 
-' Conexiones a persistencia (Archivos)
-fact -(0- files : IArchivos
+' Facturación 
+facturas -(0- clientes : IClientes
+facturas -(0- suscripciones : ISuscripciones
+
+' Cobros y Deuda
+cobros -(0- facturas : IFacturas
+deuda -(0- cobros : ICobros
+
+' Notificaciones y Soporte
+facturas -(0- comunicacion : IComunicacion
+deuda -(0- comunicacion : IComunicacion
+incidencias -(0- comunicacion : IComunicacion
+
+' --- Conexiones a Persistencia ---
+auth -(0- db : IDatabase
+clientes -(0- db : IDatabase
+tarifas -(0- db : IDatabase
+suscripciones -(0- db : IDatabase
+facturas -(0- db : IDatabase
+cobros -(0- db : IDatabase
+reportes -(0- db : IDatabase
+
+' --- Conexiones a Servicios Externos ---
+cobros -(0- stripe : IPagos
+comunicacion -(0- mail : IMensajeriaExterna
+
 @enduml
