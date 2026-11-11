@@ -32,16 +32,21 @@ package "Módulo de Cobros" {
 
 package "Módulo de Soporte" {
     [Comunicaciones Externas] as comunicacion
+    [Notificaciones Internas] as notificaciones
     [Incidencias Internas] as incidencias
 }
 
 package "Módulo de Control" {
     [Reportes y Dashboard] as reportes
     [API Gateway Externa] as api
+    [Configuración del Sistema] as config
+    [Auditoría] as auditoria
+    [Planificador de Tareas] as planificador
 }
 
 package "Persistencia" {
     [Base de Datos] as db
+    [Almacenamiento de Archivos] as files
 }
 
 package "Servicios Externos" {
@@ -51,49 +56,106 @@ package "Servicios Externos" {
 
 ' --- Conexiones de Frontend ---
 web -(0- auth : IAuth
+web -(0- roles : IRoles
 web -(0- clientes : IClientes
+web -(0- tarifas : ITarifas
 web -(0- facturas : IFacturas
 web -(0- suscripciones : ISuscripciones
 web -(0- cobros : ICobros
-web -(0- reportes : IReportes
+web -(0- deuda : IDeuda
+web -(0- comunicacion : IComunicacion
+web -(0- notificaciones : INotificaciones
 web -(0- incidencias : IIncidencias
+web -(0- reportes : IReportes
+web -(0- config : IConfiguracion
+web -(0- auditoria : IAuditoria
 
 ' --- Conexiones de la API ---
 brain -(0- api : IConsultaAPI
 api -(0- deuda : IDeuda
 
 ' --- Conexiones Internas de Negocio ---
-' Seguridad
+' Seguridad: la autenticación identifica al usuario y Gestión de Roles
+' decide qué puede hacer (ver la nota de interfaces transversales)
 auth -(0- roles : IRoles
+roles -(0- clientes : IClientes
 
 ' Comercial
 suscripciones -(0- tarifas : ITarifas
 suscripciones -(0- clientes : IClientes
 
-' Facturación 
+' Facturación
 facturas -(0- clientes : IClientes
 facturas -(0- suscripciones : ISuscripciones
+facturas -(0- tarifas : ITarifas
 
 ' Cobros y Deuda
 cobros -(0- facturas : IFacturas
 deuda -(0- cobros : ICobros
+deuda -(0- facturas : IFacturas
 
-' Notificaciones y Soporte
+' Comunicaciones con el cliente
 facturas -(0- comunicacion : IComunicacion
 deuda -(0- comunicacion : IComunicacion
-incidencias -(0- comunicacion : IComunicacion
+' Un rebote de correo abre una incidencia interna (FR25.3)
+comunicacion -(0- incidencias : IIncidencias
+
+' Avisos internos a los empleados (FR26)
+facturas -(0- notificaciones : INotificaciones
+suscripciones -(0- notificaciones : INotificaciones
+cobros -(0- notificaciones : INotificaciones
+deuda -(0- notificaciones : INotificaciones
+incidencias -(0- notificaciones : INotificaciones
+notificaciones -(0- comunicacion : IComunicacion
+
+' Procesos automáticos en segundo plano (FR33, actor Temporizador)
+planificador -(0- auth : IAuth
+planificador -(0- roles : IRoles
+planificador -(0- tarifas : ITarifas
+planificador -(0- suscripciones : ISuscripciones
+planificador -(0- facturas : IFacturas
+planificador -(0- cobros : ICobros
+planificador -(0- deuda : IDeuda
+planificador -(0- comunicacion : IComunicacion
+planificador -(0- reportes : IReportes
 
 ' --- Conexiones a Persistencia ---
 auth -(0- db : IDatabase
+roles -(0- db : IDatabase
 clientes -(0- db : IDatabase
 tarifas -(0- db : IDatabase
 suscripciones -(0- db : IDatabase
 facturas -(0- db : IDatabase
 cobros -(0- db : IDatabase
+deuda -(0- db : IDatabase
+comunicacion -(0- db : IDatabase
+notificaciones -(0- db : IDatabase
+incidencias -(0- db : IDatabase
 reportes -(0- db : IDatabase
+api -(0- db : IDatabase
+config -(0- db : IDatabase
+auditoria -(0- db : IDatabase
+planificador -(0- db : IDatabase
+
+clientes -(0- files : IArchivos
+suscripciones -(0- files : IArchivos
+facturas -(0- files : IArchivos
+incidencias -(0- files : IArchivos
+reportes -(0- files : IArchivos
 
 ' --- Conexiones a Servicios Externos ---
 cobros -(0- stripe : IPagos
 comunicacion -(0- mail : IMensajeriaExterna
+
+note as NotaTransversales
+  <b>Interfaces transversales</b>
+  Por legibilidad no se dibuja una conexión por componente:
+  * <b>IRoles</b>: todos los componentes de negocio comprueban
+    el permiso del usuario antes de actuar (FR3, RNF-07).
+  * <b>IAuditoria</b>: todos los componentes que modifican datos
+    sensibles registran la operación (RNF-08).
+  * <b>IConfiguracion</b>: Autenticación, Emisión de Facturas y
+    Gestión de Deuda leen plazos, umbrales y dominio (FR31.2).
+end note
 
 @enduml

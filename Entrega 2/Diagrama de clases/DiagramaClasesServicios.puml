@@ -7,51 +7,61 @@ skinparam packageStyle rectangle
 skinparam shadowing false
 set namespaceSeparator none
 hide empty members
+left to right direction
 
-' Clases del modelo de dominio que usan los servicios.
+' Clases del modelo de dominio que usan los servicios (fondo gris).
 ' Sus atributos y operaciones están en DiagramaClasesDominio.puml.
-package "Modelo de dominio (ver DiagramaClasesDominio.puml)" #EEEEEE {
-    class Usuario
-    class Rol
-    class Permiso
-    class Sesion
-    class TokenRestablecimiento
-    class AsignacionCliente
-    class Tarea
-    class Cliente
-    class ImportacionCSV
-    class Suscripcion
-    class Concepto
-    class TablaTarifas
-    class RevisionAnual
-    class Presupuesto
-    class Factura
-    class PeriodoAdministrativo
-    class SolicitudAprobacion
-    class Cobro
-    class Conciliacion
-    class Plantilla
-    class Envio
-    class EnvioProgramado
-    class Notificacion
-    class PreferenciasNotificacion
-    class IncidenciaInterna
-    class Comentario
-    class FiltroGuardado
-    class AccionMasiva
-    class Informe
-    class PaqueteGestoria
-    class ObjetivoFacturacion
-    class TipoCambio
-    class InformeProgramado
-    class CredencialAPI
-    class RegistroAuditoria
-    class EjecucionProceso
-    class ConfiguracionSistema <<singleton>>
-}
+' No van en un paquete para que cada una se dibuje junto al servicio que la usa.
+class Usuario #DDDDDD
+class Rol #DDDDDD
+class Permiso #DDDDDD
+class Sesion #DDDDDD
+class TokenRestablecimiento #DDDDDD
+class AsignacionCliente #DDDDDD
+class Tarea #DDDDDD
+class Cliente #DDDDDD
+class ImportacionCSV #DDDDDD
+class Suscripcion #DDDDDD
+class Concepto #DDDDDD
+class TablaTarifas #DDDDDD
+class RevisionAnual #DDDDDD
+class Presupuesto #DDDDDD
+class Factura #DDDDDD
+class FacturaRectificativa #DDDDDD
+class SerieFacturacion #DDDDDD
+class PeriodoAdministrativo #DDDDDD
+class SolicitudAprobacion #DDDDDD
+class Cobro #DDDDDD
+class Conciliacion #DDDDDD
+class Plantilla #DDDDDD
+class Envio #DDDDDD
+class EnvioProgramado #DDDDDD
+class Notificacion #DDDDDD
+class PreferenciasNotificacion #DDDDDD
+class IncidenciaInterna #DDDDDD
+class Comentario #DDDDDD
+class Adjunto #DDDDDD
+class FiltroGuardado #DDDDDD
+class AccionMasiva #DDDDDD
+class Informe #DDDDDD
+class PaqueteGestoria #DDDDDD
+class ObjetivoFacturacion #DDDDDD
+class TipoCambio #DDDDDD
+class InformeProgramado #DDDDDD
+class CalendarioLaboral #DDDDDD
+class CredencialAPI #DDDDDD
+class RegistroAuditoria #DDDDDD
+class EjecucionProceso #DDDDDD
+class ConfiguracionSistema <<singleton>> #DDDDDD
+
+legend right
+  Las clases con fondo gris y sin atributos son del modelo
+  de dominio (ver DiagramaClasesDominio.puml).
+endlegend
 
 ' =====================================================================
 ' ACCESO, AUTORIZACIÓN Y USUARIOS (FR1, FR2, FR3)
+' Componentes: Autenticación y Gestión de Roles
 ' =====================================================================
 package "Acceso, autorización y usuarios" {
 
@@ -93,6 +103,8 @@ package "Acceso, autorización y usuarios" {
 
 ' =====================================================================
 ' CLIENTES, SUSCRIPCIONES Y CATÁLOGO (FR4 - FR12)
+' Componentes: Gestión de Fichas y Contactos, Suscripciones Recurrentes,
+' Catálogo y Tarifas
 ' =====================================================================
 package "Clientes, suscripciones y catálogo" {
 
@@ -105,6 +117,8 @@ package "Clientes, suscripciones y catálogo" {
         + fusionar(actor : Usuario, original : Cliente, duplicado : Cliente) : void
         + importarCSV(actor : Usuario, archivo : String) : ImportacionCSV
         + consultarHistorial(actor : Usuario, c : Cliente) : List<EventoHistorial>
+        + marcarFavorito(actor : Usuario, c : Cliente, favorito : boolean) : void
+        + adjuntar(actor : Usuario, c : Cliente, a : Adjunto) : void
     }
 
     class ServicioSuscripciones <<control>> {
@@ -113,6 +127,7 @@ package "Clientes, suscripciones y catálogo" {
         + pausar(actor : Usuario, s : Suscripcion, motivo : String, reactivacion : Date) : void
         + reanudar(actor : Usuario, s : Suscripcion) : void
         + darDeBaja(actor : Usuario, s : Suscripcion, fechaEfectiva : Date) : void
+        + adjuntarContrato(actor : Usuario, s : Suscripcion, a : Adjunto) : void
         + procesarCambiosProgramados(fecha : Date) : EjecucionProceso
     }
 
@@ -125,24 +140,27 @@ package "Clientes, suscripciones y catálogo" {
         + prepararRevisiones(anio : int) : List<RevisionAnual>
         + registrarFacturacion(actor : Usuario, r : RevisionAnual, importe : Decimal, fuente : String) : void
         + aprobarCambio(actor : Usuario, r : RevisionAnual) : void
+        + rechazarCambio(actor : Usuario, r : RevisionAnual) : void
     }
 }
 
 ' =====================================================================
 ' FACTURACIÓN Y APROBACIONES (FR13 - FR20)
+' Componente: Emisión de Facturas
 ' =====================================================================
 package "Facturación y aprobaciones" {
 
     class ServicioFacturacion <<control>> {
         + crearPresupuesto(actor : Usuario, c : Cliente) : Presupuesto
+        + responderPresupuesto(actor : Usuario, p : Presupuesto, aceptado : boolean, evidencia : Adjunto) : void
         + convertirEnFactura(actor : Usuario, p : Presupuesto) : Factura
         + crearFactura(actor : Usuario, c : Cliente) : Factura
         + previsualizar(actor : Usuario, f : Factura) : DocumentoPDF
         + emitir(actor : Usuario, f : Factura) : void
-        + rectificar(actor : Usuario, f : Factura, motivo : String) : Factura
-        + marcarEnDisputa(actor : Usuario, f : Factura, motivo : String, revision : Date) : void
-        + pausarSeguimiento(actor : Usuario, f : Factura, motivo : String, revision : Date) : void
+        + eliminarBorrador(actor : Usuario, f : Factura) : void
+        + rectificar(actor : Usuario, f : Factura, motivo : String) : FacturaRectificativa
         + descargarPDF(actor : Usuario, f : Factura) : DocumentoPDF
+        + adjuntar(actor : Usuario, f : Factura, a : Adjunto) : void
         + cerrarPeriodo(actor : Usuario, p : PeriodoAdministrativo) : void
         + reabrirPeriodo(actor : Usuario, p : PeriodoAdministrativo, motivo : String) : void
         + importarFacturasAntiguas(actor : Usuario, archivo : String) : int
@@ -161,58 +179,89 @@ package "Facturación y aprobaciones" {
 }
 
 ' =====================================================================
-' COBROS Y CONCILIACIÓN (FR21 - FR24)
+' COBROS, CONCILIACIÓN Y DEUDA (FR21 - FR24)
+' Componentes: Conciliación de Pagos y Gestión de Deuda e Impagos
 ' =====================================================================
-package "Cobros" {
+package "Cobros y deuda" {
 
     interface PasarelaPago {
         + obtenerEventos(desde : DateTime) : List<Cobro>
     }
 
-    class StripeSimulado {
+    class StripeSimulado <<boundary>> {
         + obtenerEventos(desde : DateTime) : List<Cobro>
     }
 
-    class ImportadorMovimientos {
+    class ImportadorMovimientos <<boundary>> {
         + cargar(archivo : String, origen : OrigenCobro) : List<Cobro>
     }
 
     class ServicioConciliacion <<control>> {
         + registrarCobro(c : Cobro) : void
         + esDuplicado(c : Cobro) : boolean
+        + cargarMovimientos(actor : Usuario, archivo : String, origen : OrigenCobro) : List<Cobro>
         + conciliarAutomaticamente(c : Cobro) : Conciliacion [0..1]
         + conciliarManualmente(actor : Usuario, c : Cobro, f : Factura, importe : Decimal) : Conciliacion
         + anular(actor : Usuario, con : Conciliacion, motivo : String) : void
+    }
+
+    ' Reglas sobre lo que los clientes deben: vencimientos, disputas,
+    ' incobrables y flujo de recordatorios e impagos.
+    class ServicioDeuda <<control>> {
+        + calcularDeuda(c : Cliente) : EstadoDeuda
+        + marcarEnDisputa(actor : Usuario, f : Factura, motivo : String, revision : Date) : void
+        + pausarSeguimiento(actor : Usuario, f : Factura, motivo : String, revision : Date) : void
+        + reanudarSeguimiento(actor : Usuario, f : Factura) : void
+        + solicitarIncobrable(actor : Usuario, f : Factura, motivo : String) : SolicitudAprobacion
+        + simularCalendario(actor : Usuario, f : Factura) : List<Date>
+        + marcarVencidas(fecha : Date) : EjecucionProceso
+        + enviarRecordatoriosPrevios(fecha : Date) : EjecucionProceso
+        + enviarAvisosVencimiento(fecha : Date) : EjecucionProceso
+        + enviarAvisosImpago(fecha : Date) : EjecucionProceso
+        + revisarPausasVencidas(fecha : Date) : void
+    }
+
+    class EstadoDeuda <<DTO>> {
+        - importePendiente : Decimal
+        - importeVencido : Decimal
+        - facturasPendientes : List<String>
     }
 }
 
 ' =====================================================================
 ' COMUNICACIONES, NOTIFICACIONES E INCIDENCIAS (FR23, FR25 - FR27)
+' Componentes: Comunicaciones Externas, Notificaciones Internas e
+' Incidencias Internas
 ' =====================================================================
 package "Comunicaciones e incidencias" {
 
-    interface ServicioCorreo {
+    ' Adaptador del proveedor externo (RNF-11): se puede cambiar de
+    ' proveedor o añadir canales sin tocar los servicios.
+    interface ProveedorMensajeria {
         + enviar(e : Envio) : boolean
     }
 
-    class CorreoSMTP {
+    class CorreoSMTP <<boundary>> {
+        + enviar(e : Envio) : boolean
+    }
+
+    class WhatsAppAPI <<boundary>> {
         + enviar(e : Envio) : boolean
     }
 
     ' Modo prueba: simula envíos sin mandar nada al cliente (FR25.4).
-    class CorreoSimulado {
+    class MensajeriaSimulada <<boundary>> {
         + enviar(e : Envio) : boolean
     }
 
-    class ServicioRecordatorios <<control>> {
-        + enviarFacturaEmitida(f : Factura) : Envio
-        + enviarRecordatoriosPrevios(fecha : Date) : EjecucionProceso
-        + enviarAvisosVencimiento(fecha : Date) : EjecucionProceso
-        + enviarAvisosImpago(fecha : Date) : EjecucionProceso
-        + revisarPausasVencidas(fecha : Date) : void
-        + simularCalendario(actor : Usuario, f : Factura) : List<Date>
-        + editarPlantilla(actor : Usuario, p : Plantilla, asunto : String, cuerpo : String) : void
+    class ServicioComunicaciones <<control>> {
+        + enviarFactura(f : Factura) : Envio
+        + enviarAviso(f : Factura, tipo : TipoPlantilla) : Envio
+        + reintentar(e : Envio) : Envio
+        + registrarRebote(e : Envio) : IncidenciaInterna
+        + simularEnvio(actor : Usuario, f : Factura, tipo : TipoPlantilla) : Envio
         + consultarEnvios(actor : Usuario, f : Factura) : List<Envio>
+        + editarPlantilla(actor : Usuario, p : Plantilla, asunto : String, cuerpo : String) : void
         + programarEnvioPeriodico(actor : Usuario, f : Factura, frecuencia : String) : EnvioProgramado
         + enviarProgramados(fecha : Date) : EjecucionProceso
     }
@@ -227,6 +276,7 @@ package "Comunicaciones e incidencias" {
 
     class ServicioIncidencias <<control>> {
         + crear(actor : Usuario, titulo : String, descripcion : String, c : Cliente) : IncidenciaInterna
+        + crearPorRebote(e : Envio) : IncidenciaInterna
         + comentar(actor : Usuario, i : IncidenciaInterna, texto : String, restringido : boolean) : Comentario
         + adjuntar(actor : Usuario, i : IncidenciaInterna, a : Adjunto) : void
         + cerrar(actor : Usuario, i : IncidenciaInterna, resolucion : String) : void
@@ -234,9 +284,11 @@ package "Comunicaciones e incidencias" {
 }
 
 ' =====================================================================
-' OPERATIVA, INFORMES, API Y PROCESOS (FR28 - FR33)
+' OPERATIVA, INFORMES, CONFIGURACIÓN, API Y PROCESOS (FR28 - FR33)
+' Componentes: Reportes y Dashboard, Configuración del Sistema,
+' API Gateway Externa, Auditoría y Planificador de Tareas
 ' =====================================================================
-package "Operativa, informes, API y procesos" {
+package "Operativa, informes, configuración, API y procesos" {
 
     class BuscadorGlobal <<control>> {
         + buscarClientes(actor : Usuario, criterios : Map<String, String>) : List<Cliente>
@@ -251,7 +303,7 @@ package "Operativa, informes, API y procesos" {
         + configurarObjetivo(actor : Usuario, o : ObjetivoFacturacion) : void
     }
 
-    class MetricasFinancieras {
+    class MetricasFinancieras <<DTO>> {
         - totalFacturado : Decimal
         - totalCobrado : Decimal
         - pendienteCobro : Decimal
@@ -263,12 +315,18 @@ package "Operativa, informes, API y procesos" {
         + generarInforme(actor : Usuario, filtros : Map<String, String>, formato : FormatoExportacion) : Informe
         + generarPaqueteGestoria(actor : Usuario, p : PeriodoAdministrativo) : PaqueteGestoria
         + programarInforme(actor : Usuario, frecuencia : String, destinatarios : List<Usuario>) : InformeProgramado
+        + ejecutarInformesProgramados(fecha : Date) : EjecucionProceso
         + ejecutarAccionMasiva(actor : Usuario, a : AccionMasiva) : String
     }
 
+    ' Dos casos de uso con permisos distintos: los datos del emisor los
+    ' modifica el administrador (FR31.1) y los parámetros globales, el
+    ' superadministrador (FR31.2).
     class ServicioConfiguracion <<control>> {
-        + modificar(actor : Usuario, cfg : ConfiguracionSistema) : void
-        + consultarAuditoria(actor : Usuario, filtro : Map<String, String>) : List<RegistroAuditoria>
+        + modificarDatosEmisor(actor : Usuario, datos : DatosFiscales) : void
+        + modificarParametros(actor : Usuario, cfg : ConfiguracionSistema) : void
+        + gestionarSerie(actor : Usuario, s : SerieFacturacion) : void
+        + gestionarFestivos(actor : Usuario, c : CalendarioLaboral) : void
         + consultarEstadoSistema(actor : Usuario) : List<EjecucionProceso>
     }
 
@@ -276,22 +334,20 @@ package "Operativa, informes, API y procesos" {
         + consultarDeuda(idCliente : Long, clave : String) : EstadoDeuda
     }
 
-    class EstadoDeuda {
-        - importePendiente : Decimal
-        - importeVencido : Decimal
-        - facturasPendientes : List<String>
-    }
-
     class ServicioAuditoria <<control>> {
         + registrar(actor : Usuario, accion : String, entidad : String, idEntidad : Long, detalle : String) : RegistroAuditoria
+        + consultar(actor : Usuario, filtro : Map<String, String>) : List<RegistroAuditoria>
     }
 
     ' Actor Temporizador (Scheduler) de los casos de uso.
     class Planificador <<control>> {
         + ejecutarGeneracionMensual() : void
+        + ejecutarCambiosDeSuscripciones() : void
         + ejecutarRecordatorios() : void
+        + ejecutarEnviosProgramados() : void
         + ejecutarConciliacion() : void
         + ejecutarInformesProgramados() : void
+        + ejecutarResumenesDiarios() : void
         + revisarAsignacionesTemporales() : void
         + cerrarSesionesInactivas() : void
         + prepararRevisionesAnuales() : void
@@ -302,8 +358,10 @@ note as NotaAutorizacion
   Toda operación que recibe un actor : Usuario llama primero
   a ServicioAutorizacion.autorizar(actor, PERMISO) y, si cambia
   datos, a ServicioAuditoria.registrar(...). Los servicios no
-  conocen los roles: solo los permisos (FR3, RNF-08).
-  Las operaciones sin actor las lanza el Planificador.
+  conocen los roles: solo los permisos (FR3, RNF-07, RNF-08).
+  Por legibilidad solo se dibujan las dependencias hacia
+  ServicioAutorizacion. Las operaciones sin actor las lanza
+  el Planificador o las invoca otro servicio.
 end note
 
 ' =====================================================================
@@ -323,13 +381,15 @@ ServicioRevisionAnual ..> ServicioAutorizacion : <<use>>
 ServicioFacturacion ..> ServicioAutorizacion : <<use>>
 ServicioAprobaciones ..> ServicioAutorizacion : <<use>>
 ServicioConciliacion ..> ServicioAutorizacion : <<use>>
-ServicioIncidencias ..> ServicioAutorizacion : <<use>>
-ServicioRecordatorios ..> ServicioAutorizacion : <<use>>
+ServicioDeuda ..> ServicioAutorizacion : <<use>>
+ServicioComunicaciones ..> ServicioAutorizacion : <<use>>
 ServicioNotificaciones ..> ServicioAutorizacion : <<use>>
+ServicioIncidencias ..> ServicioAutorizacion : <<use>>
 BuscadorGlobal ..> ServicioAutorizacion : <<use>>
 PanelFinanciero ..> ServicioAutorizacion : <<use>>
 ServicioInformes ..> ServicioAutorizacion : <<use>>
 ServicioConfiguracion ..> ServicioAutorizacion : <<use>>
+ServicioAuditoria ..> ServicioAutorizacion : <<use>>
 
 ' --- Acceso y usuarios ---
 ServicioAutenticacion ..> Usuario : <<use>>
@@ -339,6 +399,8 @@ ServicioAutenticacion ..> ConfiguracionSistema : <<use>>
 ServicioUsuarios ..> Usuario : <<create>>
 ServicioUsuarios ..> Rol : <<use>>
 ServicioUsuarios ..> Permiso : <<use>>
+ServicioUsuarios ..> PreferenciasNotificacion : <<use>>
+ServicioUsuarios ..> ConfiguracionSistema : <<use>>
 ServicioUsuarios ..> ServicioAutenticacion : <<use>>
 ServicioAsignaciones ..> AsignacionCliente : <<create>>
 ServicioAsignaciones ..> Tarea : <<use>>
@@ -346,48 +408,64 @@ ServicioAsignaciones ..> Tarea : <<use>>
 ' --- Clientes, suscripciones y catálogo ---
 ServicioClientes ..> Cliente : <<create>>
 ServicioClientes ..> ImportacionCSV : <<create>>
+ServicioClientes ..> Adjunto : <<use>>
 ServicioSuscripciones ..> Suscripcion : <<create>>
+ServicioSuscripciones ..> ServicioNotificaciones : <<use>>
 ServicioCatalogo ..> Concepto : <<use>>
 ServicioCatalogo ..> TablaTarifas : <<use>>
 ServicioRevisionAnual ..> RevisionAnual : <<create>>
 ServicioRevisionAnual ..> TablaTarifas : <<use>>
+ServicioRevisionAnual ..> ServicioNotificaciones : <<use>>
 
 ' --- Facturación y aprobaciones ---
 ServicioFacturacion ..> Presupuesto : <<create>>
 ServicioFacturacion ..> Factura : <<create>>
+ServicioFacturacion ..> FacturaRectificativa : <<create>>
 ServicioFacturacion ..> PeriodoAdministrativo : <<use>>
+ServicioFacturacion ..> SerieFacturacion : <<use>>
+ServicioFacturacion ..> ConfiguracionSistema : <<use>>
 ServicioFacturacion ..> ServicioAprobaciones : <<use>>
-ServicioFacturacion ..> ServicioRecordatorios : <<use>>
+ServicioFacturacion ..> ServicioComunicaciones : <<use>>
 ServicioFacturacionRecurrente ..> Suscripcion : <<use>>
 ServicioFacturacionRecurrente ..> Factura : <<create>>
-ServicioFacturacionRecurrente ..> ServicioRecordatorios : <<use>>
+ServicioFacturacionRecurrente ..> ServicioComunicaciones : <<use>>
 ServicioAprobaciones ..> SolicitudAprobacion : <<create>>
 ServicioAprobaciones ..> ServicioNotificaciones : <<use>>
 
-' --- Cobros ---
+' --- Cobros y deuda ---
 PasarelaPago <|.. StripeSimulado
 ServicioConciliacion ..> PasarelaPago : <<use>>
 ServicioConciliacion ..> ImportadorMovimientos : <<use>>
 ServicioConciliacion ..> Cobro : <<use>>
 ServicioConciliacion ..> Conciliacion : <<create>>
 ServicioConciliacion ..> ServicioNotificaciones : <<use>>
+ServicioDeuda ..> Factura : <<use>>
+ServicioDeuda ..> EstadoDeuda : <<create>>
+ServicioDeuda ..> CalendarioLaboral : <<use>>
+ServicioDeuda ..> ConfiguracionSistema : <<use>>
+ServicioDeuda ..> ServicioComunicaciones : <<use>>
+ServicioDeuda ..> ServicioAprobaciones : <<use>>
+ServicioDeuda ..> ServicioNotificaciones : <<use>>
 
 ' --- Comunicaciones e incidencias ---
-ServicioCorreo <|.. CorreoSMTP
-ServicioCorreo <|.. CorreoSimulado
-ServicioRecordatorios ..> ServicioCorreo : <<use>>
-ServicioRecordatorios ..> Plantilla : <<use>>
-ServicioRecordatorios ..> Envio : <<create>>
-ServicioRecordatorios ..> EnvioProgramado : <<create>>
+ProveedorMensajeria <|.. CorreoSMTP
+ProveedorMensajeria <|.. WhatsAppAPI
+ProveedorMensajeria <|.. MensajeriaSimulada
+ServicioComunicaciones ..> ProveedorMensajeria : <<use>>
+ServicioComunicaciones ..> Plantilla : <<use>>
+ServicioComunicaciones ..> Envio : <<create>>
+ServicioComunicaciones ..> EnvioProgramado : <<create>>
+ServicioComunicaciones ..> ServicioIncidencias : <<use>>
 ServicioNotificaciones ..> PreferenciasNotificacion : <<use>>
 ServicioNotificaciones ..> Tarea : <<use>>
 ServicioNotificaciones ..> Notificacion : <<create>>
-ServicioNotificaciones ..> ServicioCorreo : <<use>>
+ServicioNotificaciones ..> ProveedorMensajeria : <<use>>
 ServicioIncidencias ..> IncidenciaInterna : <<create>>
 ServicioIncidencias ..> Comentario : <<create>>
+ServicioIncidencias ..> Adjunto : <<use>>
 ServicioIncidencias ..> ServicioNotificaciones : <<use>>
 
-' --- Operativa, informes, API y procesos ---
+' --- Operativa, informes, configuración, API y procesos ---
 BuscadorGlobal ..> FiltroGuardado : <<create>>
 PanelFinanciero ..> Factura : <<use>>
 PanelFinanciero ..> ObjetivoFacturacion : <<use>>
@@ -398,22 +476,23 @@ ServicioInformes ..> PaqueteGestoria : <<create>>
 ServicioInformes ..> InformeProgramado : <<create>>
 ServicioInformes ..> AccionMasiva : <<use>>
 ServicioConfiguracion ..> ConfiguracionSistema : <<use>>
-ServicioConfiguracion ..> RegistroAuditoria : <<use>>
+ServicioConfiguracion ..> SerieFacturacion : <<use>>
+ServicioConfiguracion ..> CalendarioLaboral : <<use>>
 ServicioConfiguracion ..> EjecucionProceso : <<use>>
 APIDeudas ..> CredencialAPI : <<use>>
-APIDeudas ..> Cliente : <<use>>
+APIDeudas ..> ServicioDeuda : <<use>>
 APIDeudas ..> ServicioAuditoria : <<use>>
-APIDeudas ..> EstadoDeuda : <<create>>
 ServicioAuditoria ..> RegistroAuditoria : <<create>>
 Planificador ..> ServicioFacturacionRecurrente : <<use>>
 Planificador ..> ServicioSuscripciones : <<use>>
-Planificador ..> ServicioRecordatorios : <<use>>
+Planificador ..> ServicioDeuda : <<use>>
+Planificador ..> ServicioComunicaciones : <<use>>
 Planificador ..> ServicioConciliacion : <<use>>
+Planificador ..> ServicioInformes : <<use>>
+Planificador ..> ServicioNotificaciones : <<use>>
 Planificador ..> ServicioAsignaciones : <<use>>
 Planificador ..> ServicioAutenticacion : <<use>>
 Planificador ..> ServicioRevisionAnual : <<use>>
-Planificador ..> ServicioNotificaciones : <<use>>
-Planificador ..> InformeProgramado : <<use>>
 Planificador "1" -- "0..*" EjecucionProceso : registra >
 
 @enduml

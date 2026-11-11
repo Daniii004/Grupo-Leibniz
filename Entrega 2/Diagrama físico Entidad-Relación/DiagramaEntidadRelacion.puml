@@ -1,120 +1,821 @@
-@startuml
+@startuml DiagramaEntidadRelacion
+
+title Diagrama físico Entidad-Relación - Sistema interno de facturación y cobros de Turbine
+
 skinparam linetype ortho
-skinparam nodesep 80
-skinparam ranksep 80
+skinparam nodesep 40
+skinparam ranksep 60
+skinparam packageStyle rectangle
+set namespaceSeparator none
 hide circle
 
-' ==========================================
-' BLOQUE RBAC (Control de Acceso)
-' ==========================================
-entity "Rol" as rol {
-  * id : INT <<PK>>
-  --
-  * nombre : VARCHAR(50) <<UNIQUE>>
-  * descripcion : VARCHAR(255)
-  * idRolPadre : INT <<FK>>
-}
-
-entity "Permiso" as permiso {
-  * id : INT <<PK>>
-  --
-  * codigo : VARCHAR(50) <<UNIQUE>>
-  * descripcion : VARCHAR(255)
-}
-
-entity "PermisosDeRol" as rolPermiso {
-  * idRol : INT <<PK, FK>>
-  * idPermiso : INT <<PK, FK>>
-}
-
-entity "UsuarioPermiso" as usuarioPermiso {
-  * idUsuario : INT <<PK, FK>>
-  * idPermiso : INT <<PK, FK>>
-  --
-  * concedido : BOOL
-  * fecha : DATE
-  * idConcedidoPor : INT <<FK>>
-}
+' Convenciones:
+'   * columna obligatoria (NOT NULL); sin asterisco, admite NULL
+'   <<PK>> clave primaria, <<FK>> clave foránea, <<UNIQUE>> valor único
+'   Los enumerados del diagrama de clases se guardan como VARCHAR
+'   La descripción de cada tabla está en tablas_del_sistema.md
 
 ' ==========================================
-' BLOQUE NÚCLEO (Usuarios y Clientes)
+' BLOQUE 1: RBAC, USUARIOS Y ASIGNACIONES
 ' ==========================================
-entity "Usuario" as usuario {
-  * id : INT <<PK>>
-  --
-  * idRol : INT <<FK>>
-  * nombre : VARCHAR(100)
-  * email : VARCHAR(100)
-  * hashContrasena : VARCHAR(255)
-  * activo : BOOL
-  * fechaAlta : DATE
-}
+package "1. Usuarios, roles y asignaciones" {
 
-entity "AsignacionDeCliente" as asignacion {
-  * id : INT <<PK>>
-  --
-  * idUsuario : INT <<FK>>
-  * idCliente : INT <<FK>>
-  * idTitularOriginal : INT <<FK>>
-  * tipo : VARCHAR(20)
-  * fechaInicio : DATE
-  * fechaFin : DATE
-}
+  entity "Rol" as rol {
+    * id : INT <<PK>>
+    --
+    * nombre : VARCHAR(50) <<UNIQUE>>
+    * descripcion : VARCHAR(255)
+    idRolPadre : INT <<FK>>
+  }
 
-entity "Cliente" as cliente {
-  * id : INT <<PK>>
-  --
-  * correo : VARCHAR(70)
-  * eliminado : BOOL
+  entity "Permiso" as permiso {
+    * id : INT <<PK>>
+    --
+    * codigo : VARCHAR(50) <<UNIQUE>>
+    * descripcion : VARCHAR(255)
+  }
+
+  entity "PermisosDeRol" as rolPermiso {
+    * idRol : INT <<PK, FK>>
+    * idPermiso : INT <<PK, FK>>
+  }
+
+  entity "UsuarioPermiso" as usuarioPermiso {
+    * idUsuario : INT <<PK, FK>>
+    * idPermiso : INT <<PK, FK>>
+    --
+    * concedido : BOOL
+    * fecha : DATETIME
+    * idConcedidoPor : INT <<FK>>
+  }
+
+  entity "Usuario" as usuario {
+    * id : INT <<PK>>
+    --
+    * idRol : INT <<FK>>
+    * nombre : VARCHAR(100)
+    * email : VARCHAR(100) <<UNIQUE>>
+    * hashContrasena : VARCHAR(255)
+    * activo : BOOL
+    * fechaAlta : DATETIME
+    * notifEnPlataforma : BOOL
+    * notifPorEmail : BOOL
+    * notifResumenDiario : BOOL
+  }
+
+  entity "Sesion" as sesion {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * token : VARCHAR(255) <<UNIQUE>>
+    * inicio : DATETIME
+    * ultimaActividad : DATETIME
+    * activa : BOOL
+  }
+
+  entity "TokenRestablecimiento" as tokenRest {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * token : VARCHAR(255) <<UNIQUE>>
+    * fechaCaducidad : DATETIME
+    * usado : BOOL
+  }
+
+  entity "AsignacionDeCliente" as asignacion {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * idCliente : INT <<FK>>
+    idTitularOriginal : INT <<FK>>
+    * tipo : VARCHAR(20)
+    * fechaInicio : DATE
+    fechaFin : DATE
+    * activa : BOOL
+  }
+
+  entity "FiltroGuardado" as filtro {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * nombre : VARCHAR(100)
+    * criterios : TEXT
+  }
+
+  entity "ClienteFavorito" as favorito {
+    * idUsuario : INT <<PK, FK>>
+    * idCliente : INT <<PK, FK>>
+  }
 }
 
 ' ==========================================
-' BLOQUE INCIDENCIAS
+' BLOQUE 2: CLIENTES Y CONTACTOS
 ' ==========================================
-entity "IncidenciaInterna" as incidenciaInterna {
-  * id : INT <<PK>>
-  --
-  * idUsuario : INT <<FK>>
-  * textoIncidencia : VARCHAR(500)
+package "2. Clientes y contactos" {
+
+  entity "Cliente" as cliente {
+    * id : INT <<PK>>
+    --
+    * idDatosFiscales : INT <<FK>> <<UNIQUE>>
+    idImportacion : INT <<FK>>
+    * nombre : VARCHAR(150)
+    sector : VARCHAR(100)
+    ubicacion : VARCHAR(150)
+    * estado : VARCHAR(25)
+    * moneda : CHAR(3)
+    * fechaAlta : DATE
+    * eliminado : BOOL
+  }
+
+  entity "DatosFiscales" as datosFiscales {
+    * id : INT <<PK>>
+    --
+    * razonSocial : VARCHAR(150)
+    * identificadorFiscal : VARCHAR(30) <<UNIQUE>>
+    * domicilio : VARCHAR(255)
+    codigoPostal : VARCHAR(15)
+    * ciudad : VARCHAR(100)
+    * pais : CHAR(2)
+    * idioma : CHAR(2)
+  }
+
+  entity "EtiquetaDeCliente" as etiqueta {
+    * idCliente : INT <<PK, FK>>
+    * etiqueta : VARCHAR(50) <<PK>>
+  }
+
+  entity "PersonaContacto" as personaContacto {
+    * id : INT <<PK>>
+    --
+    * nombre : VARCHAR(100)
+    * email : VARCHAR(100)
+    telefono : VARCHAR(30)
+    * activo : BOOL
+  }
+
+  entity "CanalDeContacto" as canalContacto {
+    * idPersonaContacto : INT <<PK, FK>>
+    * canal : VARCHAR(20) <<PK>>
+  }
+
+  entity "ContactoDeCliente" as contactoCliente {
+    * idCliente : INT <<PK, FK>>
+    * idPersonaContacto : INT <<PK, FK>>
+    --
+    * rol : VARCHAR(20)
+    * activo : BOOL
+  }
+
+  entity "EventoHistorial" as evento {
+    * id : INT <<PK>>
+    --
+    * idCliente : INT <<FK>>
+    * fecha : DATETIME
+    * tipo : VARCHAR(40)
+    * descripcion : VARCHAR(500)
+  }
+
+  entity "ImportacionCSV" as importacion {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * nombreArchivo : VARCHAR(255)
+    * mapeoColumnas : TEXT
+    * soloFilasValidas : BOOL
+    * fecha : DATETIME
+    * importados : INT
+    errores : TEXT
+  }
 }
 
-entity "Comentario" as comentario {
-  * id : INT <<PK>>
-  --
-  * idUsuario : INT <<FK>>
-  * idIncidencia : INT <<FK>>
-  * texto : VARCHAR(500)
+' ==========================================
+' BLOQUE 3: SUSCRIPCIONES, TARIFAS Y CATÁLOGO
+' ==========================================
+package "3. Suscripciones, tarifas y catálogo" {
+
+  entity "Suscripcion" as suscripcion {
+    * id : INT <<PK>>
+    --
+    * idCliente : INT <<FK>>
+    * plan : VARCHAR(100)
+    * fechaInicio : DATE
+    fechaBaja : DATE
+    * cuotaMensual : DECIMAL(12,2)
+    * plazoPagoDias : INT
+    * estado : VARCHAR(25)
+    motivoPausa : VARCHAR(255)
+    fechaReactivacionPrevista : DATE
+  }
+
+  entity "LineaSuscripcion" as lineaSuscripcion {
+    * id : INT <<PK>>
+    --
+    * idSuscripcion : INT <<FK>>
+    * idConcepto : INT <<FK>>
+    * cantidad : INT
+    * precioPactado : DECIMAL(12,2)
+  }
+
+  entity "Promocion" as promocion {
+    * id : INT <<PK>>
+    --
+    * idSuscripcion : INT <<FK>>
+    * tipo : VARCHAR(30)
+    * porcentaje : DECIMAL(5,2)
+    * fechaInicio : DATE
+    fechaCaducidad : DATE
+  }
+
+  entity "Concepto" as concepto {
+    * id : INT <<PK>>
+    --
+    * idImpuesto : INT <<FK>>
+    * nombre : VARCHAR(100)
+    * descripcion : VARCHAR(255)
+    * precioReferencia : DECIMAL(12,2)
+    * activo : BOOL
+  }
+
+  entity "Impuesto" as impuesto {
+    * id : INT <<PK>>
+    --
+    * nombre : VARCHAR(50)
+    * porcentaje : DECIMAL(5,2)
+  }
+
+  entity "TablaTarifas" as tablaTarifas {
+    * id : INT <<PK>>
+    --
+    * fechaEfecto : DATE
+  }
+
+  entity "RangoTarifa" as rangoTarifa {
+    * id : INT <<PK>>
+    --
+    * idTablaTarifas : INT <<FK>>
+    * minimo : DECIMAL(14,2)
+    maximo : DECIMAL(14,2)
+    * precio : DECIMAL(12,2)
+  }
+
+  entity "RevisionAnual" as revision {
+    * id : INT <<PK>>
+    --
+    * idSuscripcion : INT <<FK>>
+    * idTablaTarifas : INT <<FK>>
+    idAprobadaPor : INT <<FK>>
+    * anio : INT
+    facturacionAnual : DECIMAL(14,2)
+    fuenteDato : VARCHAR(255)
+    fechaDato : DATE
+    * precioAnterior : DECIMAL(12,2)
+    precioNuevo : DECIMAL(12,2)
+    * estado : VARCHAR(25)
+    fechaAprobacion : DATETIME
+  }
 }
 
 ' ==========================================
-' RELACIONES RBAC
+' BLOQUE 4: PRESUPUESTOS Y FACTURACIÓN
+' ==========================================
+package "4. Presupuestos y facturación" {
+
+  entity "DocumentoComercial" as documento {
+    * id : INT <<PK>>
+    --
+    * idCliente : INT <<FK>>
+    * idCreadoPor : INT <<FK>>
+    * tipoDocumento : VARCHAR(15)
+    * fechaCreacion : DATETIME
+  }
+
+  entity "LineaDocumento" as lineaDocumento {
+    * id : INT <<PK>>
+    --
+    * idDocumento : INT <<FK>>
+    idConcepto : INT <<FK>>
+    * descripcion : VARCHAR(255)
+    * cantidad : DECIMAL(10,2)
+    * precioUnitario : DECIMAL(12,2)
+    * descuento : DECIMAL(5,2)
+    * porcentajeIVA : DECIMAL(5,2)
+  }
+
+  entity "Presupuesto" as presupuesto {
+    * idDocumento : INT <<PK, FK>>
+    --
+    * estado : VARCHAR(15)
+    * fechaValidez : DATE
+    fechaRespuesta : DATE
+  }
+
+  entity "Factura" as factura {
+    * idDocumento : INT <<PK, FK>>
+    --
+    idSuscripcion : INT <<FK>>
+    idSerie : INT <<FK>>
+    idCategoriaProyecto : INT <<FK>>
+    idPresupuesto : INT <<FK>> <<UNIQUE>>
+    idFacturaRectificada : INT <<FK>>
+    numero : VARCHAR(30)
+    fechaEmision : DATE
+    * fechaVencimiento : DATE
+    * estado : VARCHAR(25)
+    * tipo : VARCHAR(15)
+    * importePendiente : DECIMAL(12,2)
+    * seguimientoPausado : BOOL
+    motivoPausa : VARCHAR(255)
+    fechaRevisionPausa : DATE
+    motivoRectificacion : VARCHAR(255)
+  }
+
+  entity "DocumentoPDF" as documentoPdf {
+    * idFactura : INT <<PK, FK>>
+    --
+    * rutaArchivo : VARCHAR(255)
+    * hash : CHAR(64)
+    * fechaGeneracion : DATETIME
+    * destinatarios : TEXT
+  }
+
+  entity "SerieFacturacion" as serie {
+    * id : INT <<PK>>
+    --
+    * prefijo : VARCHAR(10)
+    * anio : INT
+    * ultimoNumero : INT
+    * activa : BOOL
+  }
+
+  entity "CategoriaProyecto" as categoria {
+    * id : INT <<PK>>
+    --
+    * nombre : VARCHAR(100)
+    * activa : BOOL
+  }
+
+  entity "PeriodoAdministrativo" as periodo {
+    * id : INT <<PK>>
+    --
+    idCerradoPor : INT <<FK>>
+    * anio : INT
+    * numero : INT
+    * tipo : VARCHAR(12)
+    * cerrado : BOOL
+    fechaCierre : DATETIME
+    motivoReapertura : VARCHAR(255)
+  }
+
+  entity "SolicitudAprobacion" as solicitud {
+    * id : INT <<PK>>
+    --
+    * idFactura : INT <<FK>>
+    * idSolicitante : INT <<FK>>
+    idAprobador : INT <<FK>>
+    * tipoOperacion : VARCHAR(35)
+    * motivo : VARCHAR(255)
+    * estado : VARCHAR(12)
+    comentarioAprobador : VARCHAR(500)
+    * fechaSolicitud : DATETIME
+    fechaResolucion : DATETIME
+  }
+}
+
+note bottom of factura
+  UNIQUE (idSerie, numero): numeración correlativa.
+  Los borradores no tienen serie ni número (FR18.2).
+  idFacturaRectificada <> NULL: es una rectificativa.
+end note
+
+note bottom of serie
+  UNIQUE (prefijo, anio)
+end note
+
+' ==========================================
+' BLOQUE 5: COBROS Y CONCILIACIÓN
+' ==========================================
+package "5. Cobros y conciliación" {
+
+  entity "Cobro" as cobro {
+    * id : INT <<PK>>
+    --
+    * idExterno : VARCHAR(100) <<UNIQUE>>
+    * origen : VARCHAR(10)
+    * importe : DECIMAL(12,2)
+    referencia : VARCHAR(100)
+    * fechaValor : DATE
+    * estado : VARCHAR(25)
+  }
+
+  entity "Conciliacion" as conciliacion {
+    * id : INT <<PK>>
+    --
+    * idCobro : INT <<FK>>
+    * idFactura : INT <<FK>>
+    idRealizadaPor : INT <<FK>>
+    idAnuladaPor : INT <<FK>>
+    * importeAplicado : DECIMAL(12,2)
+    * fecha : DATETIME
+    reglaAplicada : VARCHAR(100)
+    * anulada : BOOL
+    motivoAnulacion : VARCHAR(255)
+  }
+}
+
+' ==========================================
+' BLOQUE 6: COMUNICACIONES, NOTIFICACIONES E INCIDENCIAS
+' ==========================================
+package "6. Comunicaciones e incidencias" {
+
+  entity "Plantilla" as plantilla {
+    * id : INT <<PK>>
+    --
+    * nombre : VARCHAR(100)
+    * tipo : VARCHAR(25)
+    * idioma : CHAR(2)
+  }
+
+  entity "VersionPlantilla" as versionPlantilla {
+    * id : INT <<PK>>
+    --
+    * idPlantilla : INT <<FK>>
+    * numero : INT
+    * asunto : VARCHAR(200)
+    * cuerpo : TEXT
+    * fecha : DATETIME
+  }
+
+  entity "Envio" as envio {
+    * id : INT <<PK>>
+    --
+    * idVersionPlantilla : INT <<FK>>
+    idFactura : INT <<FK>>
+    idPersonaContacto : INT <<FK>>
+    idEnvioOriginal : INT <<FK>>
+    idEnvioProgramado : INT <<FK>>
+    * fecha : DATETIME
+    * canal : VARCHAR(20)
+    * destinatario : VARCHAR(100)
+    * estado : VARCHAR(15)
+    * esReintento : BOOL
+    * modoPrueba : BOOL
+  }
+
+  entity "EnvioProgramado" as envioProgramado {
+    * id : INT <<PK>>
+    --
+    * idFactura : INT <<FK>>
+    * idProgramadoPor : INT <<FK>>
+    * frecuencia : VARCHAR(20)
+    * proximoEnvio : DATETIME
+    * activo : BOOL
+  }
+
+  entity "DestinatarioDeEnvioProgramado" as destEnvioProg {
+    * idEnvioProgramado : INT <<PK, FK>>
+    * idPersonaContacto : INT <<PK, FK>>
+  }
+
+  entity "Notificacion" as notificacion {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * tipo : VARCHAR(40)
+    * mensaje : VARCHAR(500)
+    * fecha : DATETIME
+    * leida : BOOL
+  }
+
+  entity "Tarea" as tarea {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    idCliente : INT <<FK>>
+    idFactura : INT <<FK>>
+    * descripcion : VARCHAR(255)
+    * estado : VARCHAR(12)
+    fechaLimite : DATE
+  }
+
+  entity "IncidenciaInterna" as incidenciaInterna {
+    * id : INT <<PK>>
+    --
+    * idCreadaPor : INT <<FK>>
+    * idResponsable : INT <<FK>>
+    idCliente : INT <<FK>>
+    idFactura : INT <<FK>>
+    idEnvio : INT <<FK>> <<UNIQUE>>
+    * titulo : VARCHAR(150)
+    * tipo : VARCHAR(40)
+    * descripcion : VARCHAR(500)
+    * estado : VARCHAR(12)
+    * prioridad : VARCHAR(8)
+    * afectaCobro : BOOL
+    resolucion : VARCHAR(500)
+    * fechaCreacion : DATETIME
+  }
+
+  entity "Comentario" as comentario {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * idIncidencia : INT <<FK>>
+    * texto : VARCHAR(500)
+    * fecha : DATETIME
+    * restringido : BOOL
+  }
+
+  entity "MencionDeComentario" as mencion {
+    * idComentario : INT <<PK, FK>>
+    * idUsuario : INT <<PK, FK>>
+  }
+
+  entity "Adjunto" as adjunto {
+    * id : INT <<PK>>
+    --
+    idCliente : INT <<FK>>
+    idSuscripcion : INT <<FK>>
+    idDocumento : INT <<FK>>
+    idIncidencia : INT <<FK>>
+    * nombreArchivo : VARCHAR(255)
+    * tipo : VARCHAR(25)
+    descripcion : VARCHAR(255)
+    * formato : VARCHAR(10)
+    * tamanoBytes : BIGINT
+    * ruta : VARCHAR(255)
+    * fechaSubida : DATETIME
+  }
+}
+
+note bottom of adjunto
+  CHECK: exactamente una de las cuatro FK
+  (idCliente, idSuscripcion, idDocumento,
+  idIncidencia) tiene valor.
+end note
+
+' ==========================================
+' BLOQUE 7: OPERATIVA, INFORMES Y CONFIGURACIÓN
+' ==========================================
+package "7. Operativa, informes y configuración" {
+
+  entity "AccionMasiva" as accionMasiva {
+    * id : INT <<PK>>
+    --
+    * idUsuario : INT <<FK>>
+    * tipo : VARCHAR(40)
+    * filtros : TEXT
+    * numElementos : INT
+    * confirmada : BOOL
+    * fecha : DATETIME
+  }
+
+  entity "ObjetivoFacturacion" as objetivo {
+    * id : INT <<PK>>
+    --
+    * tipo : VARCHAR(12)
+    * anio : INT
+    mes : INT
+    * importe : DECIMAL(14,2)
+  }
+
+  entity "TipoCambio" as tipoCambio {
+    * id : INT <<PK>>
+    --
+    * monedaOrigen : CHAR(3)
+    * monedaBase : CHAR(3)
+    * valor : DECIMAL(12,6)
+    * fecha : DATE
+  }
+
+  entity "Informe" as informe {
+    * id : INT <<PK>>
+    --
+    idInformeProgramado : INT <<FK>>
+    idPeriodo : INT <<FK>>
+    * tipo : VARCHAR(30)
+    * filtros : TEXT
+    * formato : VARCHAR(5)
+    * fechaGeneracion : DATETIME
+    rutaArchivo : VARCHAR(255)
+    version : INT
+  }
+
+  entity "InformeProgramado" as informeProgramado {
+    * id : INT <<PK>>
+    --
+    * frecuencia : VARCHAR(20)
+    * proximaEjecucion : DATETIME
+  }
+
+  entity "DestinatarioDeInforme" as destInforme {
+    * idInformeProgramado : INT <<PK, FK>>
+    * idUsuario : INT <<PK, FK>>
+  }
+
+  entity "EntidadEmisora" as entidadEmisora {
+    * id : INT <<PK>>
+    --
+    * idDatosFiscales : INT <<FK>> <<UNIQUE>>
+    * monedaPredeterminada : CHAR(3)
+    logo : VARCHAR(255)
+  }
+
+  entity "ConfiguracionSistema" as configuracion {
+    * id : INT <<PK>>
+    --
+    * idEntidadEmisora : INT <<FK>> <<UNIQUE>>
+    * plazoPagoDefectoDias : INT
+    * diaRecordatorioPrevio : INT
+    * diaVencimiento : INT
+    * cadenciaImpagoDias : INT
+    * dominioCorreo : VARCHAR(100)
+    * minutosInactividadSesion : INT
+    * umbralImporteAlto : DECIMAL(12,2)
+    * umbralDescuento : DECIMAL(5,2)
+    * monedas : VARCHAR(100)
+    * reactivacionRequiereConfirmacion : BOOL
+  }
+
+  entity "DiaFestivo" as diaFestivo {
+    * id : INT <<PK>>
+    --
+    * fecha : DATE <<UNIQUE>>
+    * descripcion : VARCHAR(100)
+  }
+
+  entity "CredencialAPI" as credencialApi {
+    * id : INT <<PK>>
+    --
+    * hashClave : VARCHAR(255)
+    * activa : BOOL
+    * limitePeticionesMinuto : INT
+  }
+
+  entity "RegistroAuditoria" as auditoria {
+    * id : INT <<PK>>
+    --
+    idUsuario : INT <<FK>>
+    idCredencialAPI : INT <<FK>>
+    * fecha : DATETIME
+    * accion : VARCHAR(60)
+    * entidad : VARCHAR(60)
+    * idEntidad : INT
+    valorAnterior : TEXT
+    valorNuevo : TEXT
+    detalle : VARCHAR(500)
+  }
+
+  entity "EjecucionProceso" as ejecucion {
+    * id : INT <<PK>>
+    --
+    * tipo : VARCHAR(40)
+    * inicio : DATETIME
+    fin : DATETIME
+    * estado : VARCHAR(25)
+    * procesados : INT
+    * fallidos : INT
+    errores : TEXT
+  }
+}
+
+note bottom of auditoria
+  Solo admite INSERT: no se puede
+  modificar ni borrar (RNF-08, RU-13).
+end note
+
+' ==========================================
+' RELACIONES BLOQUE 1 (RBAC, usuarios y asignaciones)
 ' ==========================================
 ' Herencia recursiva entre roles (un rol puede heredar de otro)
 rol |o--o{ rol : "hereda de >"
 
 ' Relación N:M entre Rol y Permiso
-rol ||-right-o{ rolPermiso
-permiso ||-left-o{ rolPermiso
+rol ||--o{ rolPermiso
+permiso ||--o{ rolPermiso
 
 ' Relación de Usuario con su Rol principal
-rol ||-down-o{ usuario : "define >"
+rol ||--o{ usuario : "define >"
 
 ' Relación N:M de excepciones de permisos por usuario
-usuario ||-up-o{ usuarioPermiso : "tiene excepción >"
-permiso ||-down-o{ usuarioPermiso
+usuario ||--o{ usuarioPermiso : "tiene excepción >"
+permiso ||--o{ usuarioPermiso
 usuario ||--o{ usuarioPermiso : "concedido por >"
 
-' ==========================================
-' RELACIONES OPERACIONALES
-' ==========================================
-' Asignaciones de clientes empujadas a la izquierda
-usuario ||-left-o{ asignacion : "responsable actual >"
-usuario |o-up-o{ asignacion : "titular original >"
-asignacion }o-down-|| cliente : "< asignado a"
+usuario ||--o{ sesion : "abre >"
+usuario ||--o{ tokenRest : "solicita >"
 
-' Incidencias empujadas hacia abajo y comentarios a la derecha
-usuario ||-down-o{ incidenciaInterna : "pone >"
-usuario ||-right-o{ comentario : "realiza >"
-incidenciaInterna ||-right-o{ comentario : "< pertenece a"
+' Asignaciones de clientes
+usuario ||--o{ asignacion : "responsable actual >"
+usuario |o--o{ asignacion : "titular original >"
+cliente ||--o{ asignacion : "asignado en >"
+
+usuario ||--o{ filtro : "guarda >"
+usuario ||--o{ favorito
+cliente ||--o{ favorito
+
+' ==========================================
+' RELACIONES BLOQUE 2 (clientes y contactos)
+' ==========================================
+datosFiscales ||--o| cliente : "identifica >"
+importacion |o--o{ cliente : "crea >"
+usuario ||--o{ importacion : "ejecuta >"
+cliente ||--o{ etiqueta
+cliente ||--o{ contactoCliente
+personaContacto ||--o{ contactoCliente
+personaContacto ||--o{ canalContacto
+cliente ||--o{ evento : "registra >"
+
+' ==========================================
+' RELACIONES BLOQUE 3 (suscripciones, tarifas y catálogo)
+' ==========================================
+cliente ||--o{ suscripcion : "contrata >"
+suscripcion ||--|{ lineaSuscripcion
+concepto ||--o{ lineaSuscripcion
+impuesto ||--o{ concepto : "por defecto >"
+suscripcion ||--o{ promocion
+tablaTarifas ||--|{ rangoTarifa
+suscripcion ||--o{ revision
+tablaTarifas ||--o{ revision : "se calcula con <"
+usuario |o--o{ revision : "aprueba >"
+
+' ==========================================
+' RELACIONES BLOQUE 4 (presupuestos y facturación)
+' ==========================================
+cliente ||--o{ documento : "recibe >"
+usuario ||--o{ documento : "crea >"
+documento ||--|{ lineaDocumento
+concepto |o--o{ lineaDocumento : "basada en <"
+
+' Herencia DocumentoComercial -> Presupuesto / Factura (una tabla por clase)
+documento ||--o| presupuesto : "es un"
+documento ||--o| factura : "es una"
+
+presupuesto |o--o| factura : "se convierte en >"
+suscripcion |o--o{ factura : "genera >"
+serie |o--o{ factura : "numera >"
+categoria |o--o{ factura : "clasifica >"
+factura |o--o{ factura : "rectifica <"
+factura ||--o| documentoPdf : "copia inalterable >"
+usuario |o--o{ periodo : "cierra >"
+factura ||--o{ solicitud : "requiere >"
+usuario ||--o{ solicitud : "solicita >"
+usuario |o--o{ solicitud : "resuelve >"
+
+' ==========================================
+' RELACIONES BLOQUE 5 (cobros y conciliación)
+' ==========================================
+cobro ||--o{ conciliacion : "se aplica en >"
+factura ||--o{ conciliacion : "saldada por >"
+usuario |o--o{ conciliacion : "realiza >"
+usuario |o--o{ conciliacion : "anula >"
+
+' ==========================================
+' RELACIONES BLOQUE 6 (comunicaciones e incidencias)
+' ==========================================
+plantilla ||--|{ versionPlantilla
+versionPlantilla ||--o{ envio : "usada en >"
+factura |o--o{ envio : "enviada en >"
+personaContacto |o--o{ envio : "recibe >"
+envio |o--o{ envio : "reintento de <"
+envioProgramado |o--o{ envio : "genera >"
+factura ||--o{ envioProgramado
+usuario ||--o{ envioProgramado : "programa >"
+envioProgramado ||--|{ destEnvioProg
+personaContacto ||--o{ destEnvioProg
+
+usuario ||--o{ notificacion : "recibe >"
+usuario ||--o{ tarea : "responsable de >"
+cliente |o--o{ tarea
+factura |o--o{ tarea
+
+' Incidencias y comentarios
+usuario ||--o{ incidenciaInterna : "pone >"
+usuario ||--o{ incidenciaInterna : "responsable de >"
+cliente |o--o{ incidenciaInterna
+factura |o--o{ incidenciaInterna
+envio |o--o| incidenciaInterna : "rebote origina >"
+usuario ||--o{ comentario : "realiza >"
+incidenciaInterna ||--o{ comentario : "< pertenece a"
+comentario ||--o{ mencion
+usuario ||--o{ mencion : "mencionado en >"
+
+' Adjuntos (una sola de las cuatro FK tiene valor)
+cliente |o--o{ adjunto
+suscripcion |o--o{ adjunto
+documento |o--o{ adjunto
+incidenciaInterna |o--o{ adjunto
+
+' ==========================================
+' RELACIONES BLOQUE 7 (operativa, informes y configuración)
+' ==========================================
+usuario ||--o{ accionMasiva : "ejecuta >"
+informeProgramado ||--|{ destInforme
+usuario ||--o{ destInforme
+informeProgramado |o--o{ informe : "genera >"
+periodo |o--o{ informe : "cubierto por >"
+datosFiscales ||--o| entidadEmisora : "identifica >"
+entidadEmisora ||--|| configuracion
+usuario |o--o{ auditoria : "autor de >"
+credencialApi |o--o{ auditoria : "llamada de >"
 
 @enduml

@@ -7,6 +7,7 @@ skinparam packageStyle rectangle
 skinparam shadowing false
 set namespaceSeparator none
 hide empty members
+left to right direction
 
 ' =====================================================================
 ' BLOQUE 1: USUARIOS, ROLES Y ASIGNACIONES (FR1, FR2, FR3)
@@ -148,6 +149,7 @@ package "2. Clientes y contactos" {
         + getHistorial() : List<EventoHistorial>
         + fusionarCon(duplicado : Cliente) : void
         + calcularDeudaPendiente() : Decimal
+        + getResponsable() : Usuario
     }
 
     class DatosComerciales {
@@ -197,6 +199,8 @@ package "2. Clientes y contactos" {
         - nombreArchivo : String
         - mapeoColumnas : Map<String, String>
         - soloFilasValidas : boolean
+        - fecha : DateTime
+        - ejecutadaPor : Usuario
         --
         + previsualizar() : List<String>
         + detectarNIFDuplicados() : List<String>
@@ -208,6 +212,12 @@ package "2. Clientes y contactos" {
         - errores : List<String>
     }
 }
+
+note bottom of Cliente
+  {identificadorFiscal único entre clientes} (FR6.1)
+  getResponsable() se deriva de la AsignacionCliente
+  vigente (la temporal tiene prioridad sobre la principal).
+end note
 
 ' =====================================================================
 ' BLOQUE 3: SUSCRIPCIONES, TARIFAS Y CATÁLOGO (FR9 - FR12, FR15)
@@ -252,6 +262,7 @@ package "3. Suscripciones, tarifas y catálogo" {
         + calcularProrrateo(mes : Date) : Decimal
         + aplicarPromociones(importe : Decimal, mes : Date) : Decimal
         + generarFacturaMensual(mes : Date) : Factura
+        + getGestorResponsable() : Usuario
     }
 
     class LineaSuscripcion {
@@ -289,7 +300,7 @@ package "3. Suscripciones, tarifas y catálogo" {
 
     class RangoTarifa {
         - minimo : Decimal
-        - maximo : Decimal
+        - maximo : Decimal [0..1]
         - precio : Decimal
     }
 
@@ -302,6 +313,7 @@ package "3. Suscripciones, tarifas y catálogo" {
         - precioNuevo : Decimal [0..1]
         - estado : EstadoRevision
         - fechaAprobacion : DateTime [0..1]
+        - aprobadaPor : Usuario [0..1]
         --
         + registrarFacturacion(importe : Decimal, fuente : String, fecha : Date) : void
         + sugerirPrecio(t : TablaTarifas) : Decimal
@@ -338,10 +350,10 @@ package "4. Presupuestos y facturación" {
         RECTIFICADA
     }
 
+    ' Las rectificativas no son un tipo: son la subclase FacturaRectificativa.
     enum TipoFactura {
         PUNTUAL
         RECURRENTE
-        RECTIFICATIVA
         MIGRADA
     }
 
@@ -366,6 +378,7 @@ package "4. Presupuestos y facturación" {
     abstract class DocumentoComercial {
         # id : Long
         # fechaCreacion : DateTime
+        # creadoPor : Usuario
         --
         + agregarLinea(c : Concepto, cantidad : Decimal) : LineaDocumento
         + calcularBaseImponible() : Decimal
@@ -456,6 +469,7 @@ package "4. Presupuestos y facturación" {
         - cerrado : boolean
         - fechaCierre : DateTime [0..1]
         - motivoReapertura : String [0..1]
+        - cerradoPor : Usuario [0..1]
         --
         + cerrar(u : Usuario) : void
         + reabrir(u : Usuario, motivo : String) : void
@@ -470,6 +484,8 @@ package "4. Presupuestos y facturación" {
         - comentarioAprobador : String [0..1]
         - fechaSolicitud : DateTime
         - fechaResolucion : DateTime [0..1]
+        - solicitante : Usuario
+        - aprobador : Usuario [0..1]
         --
         + aprobar(aprobador : Usuario, comentario : String) : void
         + rechazar(aprobador : Usuario, comentario : String) : void
@@ -509,12 +525,16 @@ package "5. Cobros y conciliación" {
     }
 
     ' Registra qué movimiento y qué regla o usuario justificó el pago (FR21.4).
+    ' Es una clase normal y no de asociación: tras anular una conciliación
+    ' (FR22.2) el mismo cobro puede volver a aplicarse a la misma factura.
     class Conciliacion {
         - importeAplicado : Decimal
         - fecha : DateTime
         - reglaAplicada : String [0..1]
         - anulada : boolean
         - motivoAnulacion : String [0..1]
+        - realizadaPor : Usuario [0..1]
+        - anuladaPor : Usuario [0..1]
         --
         + anular(u : Usuario, motivo : String) : void
     }
@@ -604,6 +624,7 @@ package "6. Comunicaciones e incidencias" {
         - frecuencia : String
         - proximoEnvio : DateTime
         - activo : boolean
+        - programadoPor : Usuario
         --
         + calcularSiguiente() : DateTime
         + desactivar() : void
@@ -645,6 +666,7 @@ package "6. Comunicaciones e incidencias" {
         - afectaCobro : boolean
         - resolucion : String [0..1]
         - fechaCreacion : DateTime
+        - creadaPor : Usuario
         --
         + asignarResponsable(u : Usuario) : void
         + comentar(autor : Usuario, texto : String, restringido : boolean) : Comentario
@@ -656,6 +678,7 @@ package "6. Comunicaciones e incidencias" {
         - texto : String
         - fecha : DateTime
         - restringido : boolean
+        - autor : Usuario
         --
         + extraerMenciones() : List<Usuario>
         + esVisiblePara(u : Usuario) : boolean
@@ -708,6 +731,7 @@ package "7. Operativa, informes y configuración" {
         - numElementos : int
         - confirmada : boolean
         - fecha : DateTime
+        - ejecutadaPor : Usuario
         --
         + previsualizar() : int
         + confirmar() : void
@@ -735,6 +759,7 @@ package "7. Operativa, informes y configuración" {
         - filtros : Map<String, String>
         - formato : FormatoExportacion
         - fechaGeneracion : DateTime
+        - rutaArchivo : String [0..1]
         --
         + generar() : void
         + exportar() : Adjunto
@@ -749,7 +774,6 @@ package "7. Operativa, informes y configuración" {
 
     class PaqueteGestoria {
         - version : int
-        - fechaGeneracion : DateTime
         --
         + generar() : void
     }
@@ -774,6 +798,17 @@ package "7. Operativa, informes y configuración" {
         + validar() : List<String>
     }
 
+    ' Los avisos de impago se adaptan a laborables y festivos (FR23.3).
+    class CalendarioLaboral {
+        + esLaborable(fecha : Date) : boolean
+        + siguienteLaborable(fecha : Date) : Date
+    }
+
+    class DiaFestivo {
+        - fecha : Date
+        - descripcion : String
+    }
+
     class CredencialAPI {
         - id : Long
         - hashClave : String
@@ -790,7 +825,10 @@ package "7. Operativa, informes y configuración" {
         - accion : String
         - entidad : String
         - idEntidad : Long
+        - valorAnterior : String [0..1]
+        - valorNuevo : String [0..1]
         - detalle : String
+        - autor : Usuario [0..1]
     }
 
     class EjecucionProceso {
@@ -809,6 +847,10 @@ package "7. Operativa, informes y configuración" {
 ' =====================================================================
 ' RELACIONES
 ' =====================================================================
+' Las referencias de trazabilidad (quién creó, aprobó, cerró o anuló algo)
+' se muestran como atributos de tipo Usuario y no como líneas: dibujadas
+' como asociaciones, más de veinte líneas llegaban a Usuario y sus
+' multiplicidades se solapaban.
 
 ' --- Bloque 1 ---
 Usuario "0..*" --> "1" Rol : tiene >
@@ -830,12 +872,11 @@ Cliente "0..*" -- "0..*" PersonaContacto : contactos
 (Cliente, PersonaContacto) .. VinculoContacto
 Cliente "1" *-- "0..*" EventoHistorial : historial
 ImportacionCSV "1" *-- "0..1" InformeImportacion
-ImportacionCSV "0..*" --> "0..*" Cliente : crea >
+ImportacionCSV "0..1" --> "0..*" Cliente : crea >
 Usuario "0..*" -- "0..*" Cliente : favoritos >
 
 ' --- Bloque 3 ---
 Cliente "1" -- "0..*" Suscripcion : contrata >
-Suscripcion "0..*" --> "1" Usuario : gestorResponsable
 Suscripcion "1" *-- "1..*" LineaSuscripcion
 LineaSuscripcion "0..*" --> "1" Concepto
 Concepto "0..*" --> "1" Impuesto : impuestoPorDefecto
@@ -843,7 +884,6 @@ Suscripcion "1" *-- "0..*" Promocion
 TablaTarifas "1" *-- "1..*" RangoTarifa
 Suscripcion "1" -- "0..*" RevisionAnual : revisiones
 RevisionAnual "0..*" --> "1" TablaTarifas : seCalculaCon
-RevisionAnual "0..*" --> "0..1" Usuario : aprobadaPor
 
 ' --- Bloque 4 ---
 DocumentoComercial <|-- Presupuesto
@@ -852,17 +892,14 @@ Factura <|-- FacturaRectificativa
 DocumentoComercial "1" *-- "1..*" LineaDocumento
 LineaDocumento "0..*" --> "0..1" Concepto : basadaEn
 DocumentoComercial "0..*" --> "1" Cliente : para
-DocumentoComercial "0..*" --> "1" Usuario : creadoPor
 Presupuesto "0..1" -- "0..1" Factura : seConvierteEn >
 Factura "0..*" --> "0..1" Suscripcion : generadaPor
 FacturaRectificativa "0..*" --> "1" Factura : rectifica
 Factura "0..*" --> "0..1" SerieFacturacion : numeradaEn
 Factura "1" *-- "0..1" DocumentoPDF : copiaInalterable
 Factura "0..*" --> "0..1" CategoriaProyecto
-Factura "0..*" --> "0..1" PeriodoAdministrativo : perteneceA
+Factura "0..*" --> "0..*" PeriodoAdministrativo : /perteneceA
 Factura "1" -- "0..*" SolicitudAprobacion : aprobaciones
-SolicitudAprobacion "0..*" --> "1" Usuario : solicitante
-SolicitudAprobacion "0..*" --> "0..1" Usuario : aprobador
 
 note bottom of SolicitudAprobacion
   {solicitante <> aprobador}
@@ -874,9 +911,8 @@ note bottom of SolicitudAprobacion
 end note
 
 ' --- Bloque 5 ---
-Cobro "0..*" -- "0..*" Factura : paga >
-(Cobro, Factura) .. Conciliacion
-Conciliacion "0..*" --> "0..1" Usuario : realizadaPor
+Cobro "1" -- "0..*" Conciliacion : seAplicaEn >
+Conciliacion "0..*" -- "1" Factura : salda >
 
 ' --- Bloque 6 ---
 Plantilla "1" *-- "1..*" VersionPlantilla
@@ -887,16 +923,16 @@ Envio "0..1" -- "0..*" Envio : reintentos
 EnvioProgramado "0..*" --> "1" Factura : de
 EnvioProgramado "0..*" --> "1..*" PersonaContacto : destinatarios
 EnvioProgramado "1" -- "0..*" Envio : genera >
-EnvioProgramado "0..*" --> "1" Usuario : programadoPor
 Usuario "1" -- "0..*" Notificacion : recibe >
 Usuario "1" -- "0..*" Tarea : responsable
+Tarea "0..*" --> "0..1" Cliente : sobre
+Tarea "0..*" --> "0..1" Factura : sobre
 Usuario "1" *-- "1" PreferenciasNotificacion
 IncidenciaInterna "0..*" --> "0..1" Cliente : sobre
 IncidenciaInterna "0..*" --> "0..1" Factura : sobre
 IncidenciaInterna "0..1" --> "0..1" Envio : originadaPorRebote
 IncidenciaInterna "0..*" --> "1" Usuario : responsable
 IncidenciaInterna "1" *-- "0..*" Comentario
-Comentario "0..*" --> "1" Usuario : autor
 Comentario "0..*" --> "0..*" Usuario : menciona
 Adjuntable "1" o-- "0..*" Adjunto
 Adjuntable <|.. Cliente
@@ -906,8 +942,6 @@ Adjuntable <|.. IncidenciaInterna
 
 ' --- Bloque 7 ---
 Usuario "1" *-- "0..*" FiltroGuardado
-AccionMasiva "0..*" --> "1" Usuario : ejecutadaPor
-AccionMasiva "0..*" --> "1..*" Cliente : afecta
 InformeProgramado "1" -- "0..*" Informe : genera >
 InformeProgramado "0..*" --> "1..*" Usuario : destinatarios
 Informe <|-- PaqueteGestoria
@@ -920,7 +954,8 @@ ConfiguracionSistema "1" o-- "1..*" SerieFacturacion
 ConfiguracionSistema "1" o-- "1..*" Impuesto
 ConfiguracionSistema "1" o-- "1..*" Plantilla
 ConfiguracionSistema "1" o-- "1..*" TablaTarifas
-RegistroAuditoria "0..*" --> "0..1" Usuario : autor
+ConfiguracionSistema "1" *-- "1" CalendarioLaboral
+CalendarioLaboral "1" *-- "0..*" DiaFestivo
 RegistroAuditoria "0..*" --> "0..1" CredencialAPI : llamadaAPI
 
 @enduml
