@@ -124,7 +124,7 @@ package "Clientes, suscripciones y catálogo" {
     class ServicioSuscripciones <<control>> {
         + crear(actor : Usuario, c : Cliente, inicio : Date, cuota : Decimal) : Suscripcion
         + modificar(actor : Usuario, s : Suscripcion) : void
-        + pausar(actor : Usuario, s : Suscripcion, motivo : String, reactivacion : Date) : void
+        + pausar(actor : Usuario, s : Suscripcion, motivo : String, inicio : Date, reactivacion : Date) : void
         + reanudar(actor : Usuario, s : Suscripcion) : void
         + darDeBaja(actor : Usuario, s : Suscripcion, fechaEfectiva : Date) : void
         + adjuntarContrato(actor : Usuario, s : Suscripcion, a : Adjunto) : void
@@ -139,8 +139,8 @@ package "Clientes, suscripciones y catálogo" {
     class ServicioRevisionAnual <<control>> {
         + prepararRevisiones(anio : int) : List<RevisionAnual>
         + registrarFacturacion(actor : Usuario, r : RevisionAnual, importe : Decimal, fuente : String) : void
-        + aprobarCambio(actor : Usuario, r : RevisionAnual) : void
-        + rechazarCambio(actor : Usuario, r : RevisionAnual) : void
+        + aprobarCambio(actor : Usuario, r : RevisionAnual, fechaEfecto : Date) : void
+        + rechazarCambio(actor : Usuario, r : RevisionAnual, motivo : String) : void
     }
 }
 

@@ -115,7 +115,7 @@ Todos los servicios que atienden a una persona dependen de `ServicioAutorizacion
 | `Impuesto` | Tipo impositivo disponible. |
 | `TablaTarifas` | Tabla de precios por rangos de facturación anual, con fecha de efecto (FR11.2). |
 | `RangoTarifa` | Un tramo de la tabla: mínimo, máximo y precio. |
-| `RevisionAnual` | Revisión de la tarifa de una suscripción: dato de facturación, precio anterior y nuevo, y quién la aprobó (FR11.3). |
+| `RevisionAnual` | Revisión de la tarifa de una suscripción: dato de facturación y quién lo registró, precio anterior y nuevo, fecha de efecto, y quién la aprobó o rechazó y con qué comentario (FR11.3, CU-308, CU-309). |
 
 ### Bloque 4: Presupuestos y facturación (FR13 a FR20)
 | Clase | De qué se ocupa |
@@ -163,7 +163,7 @@ Todos los servicios que atienden a una persona dependen de `ServicioAutorizacion
 | `InformeProgramado` | Informe periódico y sus destinatarios autorizados (FR30.9). |
 | `PaqueteGestoria` | Paquete mensual o trimestral para la gestoría, con versión (FR30.8). |
 | `EntidadEmisora` | Turbine como emisor de las facturas, con sus datos fiscales (FR31.1). |
-| `ConfiguracionSistema` | Parámetros globales: plazos, cadencias, dominio de correo, umbrales (FR31.2). |
+| `ConfiguracionSistema` | Parámetros globales: plazos, cadencias, dominio de correo, umbrales y fecha de la próxima revisión anual (FR31.2, CU-307). |
 | `CalendarioLaboral` | Sabe si un día es laborable para adaptar los avisos de impago (FR23.3). |
 | `DiaFestivo` | Día festivo del calendario. |
 | `CredencialAPI` | Credencial de un sistema externo, independiente de las de los usuarios (FR32.2). |
@@ -179,7 +179,7 @@ Todos los servicios que atienden a una persona dependen de `ServicioAutorizacion
 | `CanalComunicacion` | EMAIL, TELEFONO, WHATSAPP | FR5.5 |
 | `EstadoSuscripcion` | PENDIENTE_ACTIVACION, ACTIVA, PAUSADA, BAJA | FR9.3, FR10 |
 | `TipoPromocion` | PRIMER_MES_GRATIS, COBRO_DESDE_MES_SIGUIENTE, DESCUENTO_TEMPORAL | FR15.2, FR15.3 |
-| `EstadoRevision` | PENDIENTE_DATO, PENDIENTE_APROBACION, APROBADA, RECHAZADA | FR11.3 |
+| `EstadoRevision` | PENDIENTE_DATO, PENDIENTE_APROBACION, SIN_CAMBIOS, APROBADA, RECHAZADA | FR11.3, CU-308 |
 | `EstadoPresupuesto` | BORRADOR, ENVIADO, ACEPTADO, RECHAZADO, FACTURADO | FR13 |
 | `EstadoFactura` | BORRADOR, PENDIENTE_APROBACION, APROBADA, EMITIDA, ENVIADA, EN_DISPUTA, VENCIDA, PARCIALMENTE_CONCILIADA, PAGADA, ANULADA, INCOBRABLE, RECTIFICADA | FR18.1 |
 | `TipoFactura` | PUNTUAL, RECURRENTE, MIGRADA | FR14, FR20.1 |

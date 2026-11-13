@@ -240,6 +240,7 @@ package "3. Suscripciones, tarifas y catálogo" {
     enum EstadoRevision {
         PENDIENTE_DATO
         PENDIENTE_APROBACION
+        SIN_CAMBIOS
         APROBADA
         RECHAZADA
     }
@@ -253,10 +254,11 @@ package "3. Suscripciones, tarifas y catálogo" {
         - plazoPagoDias : int
         - estado : EstadoSuscripcion
         - motivoPausa : String [0..1]
+        - fechaInicioPausa : Date [0..1]
         - fechaReactivacionPrevista : Date [0..1]
         --
         + activar() : void
-        + pausar(motivo : String, reactivacion : Date) : void
+        + pausar(motivo : String, inicio : Date, reactivacion : Date) : void
         + reanudar() : void
         + darDeBaja(fechaEfectiva : Date) : void
         + calcularProrrateo(mes : Date) : Decimal
@@ -311,16 +313,24 @@ package "3. Suscripciones, tarifas y catálogo" {
         - fechaDato : Date [0..1]
         - precioAnterior : Decimal
         - precioNuevo : Decimal [0..1]
+        - fechaEfecto : Date [0..1]
         - estado : EstadoRevision
         - fechaAprobacion : DateTime [0..1]
+        - comentarioAprobador : String [0..1]
+        - registradaPor : Usuario [0..1]
         - aprobadaPor : Usuario [0..1]
         --
-        + registrarFacturacion(importe : Decimal, fuente : String, fecha : Date) : void
+        + registrarFacturacion(u : Usuario, importe : Decimal, fuente : String, fecha : Date) : void
         + sugerirPrecio(t : TablaTarifas) : Decimal
-        + aprobar(aprobador : Usuario) : void
-        + rechazar(aprobador : Usuario) : void
+        + aprobar(aprobador : Usuario, fechaEfecto : Date) : void
+        + rechazar(aprobador : Usuario, motivo : String) : void
     }
 }
+
+note bottom of RevisionAnual
+  {una revisión por suscripción y año} (CU-307)
+  {aprobadaPor <> registradaPor} (CU-309)
+end note
 
 ' =====================================================================
 ' BLOQUE 4: PRESUPUESTOS, FACTURACIÓN Y CICLO DOCUMENTAL (FR13 - FR20)
@@ -794,6 +804,7 @@ package "7. Operativa, informes y configuración" {
         - umbralDescuento : Decimal
         - monedas : List<String>
         - reactivacionRequiereConfirmacion : boolean
+        - proximaRevisionAnual : Date
         --
         + validar() : List<String>
     }

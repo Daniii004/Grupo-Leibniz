@@ -85,16 +85,18 @@ El cliente no tiene columna de correo: los correos son de sus personas de contac
 
 | Tabla | De qué se ocupa | Clase de origen | Claves y restricciones |
 |---|---|---|---|
-| `Suscripcion` | Acuerdos de cobro mensual (FR9, FR10). | `Suscripcion` | `fechaBaja`, `motivoPausa` y `fechaReactivacionPrevista` opcionales. |
+| `Suscripcion` | Acuerdos de cobro mensual (FR9, FR10). | `Suscripcion` | `fechaBaja`, `motivoPausa`, `fechaInicioPausa` y `fechaReactivacionPrevista` opcionales. Durante la pausa no se generan mensualidades a partir de `fechaInicioPausa` (CU-303). |
 | `LineaSuscripcion` | Conceptos contratados y precio pactado (FR9.4). | `LineaSuscripcion` | Toda suscripción tiene al menos una línea. |
 | `Promocion` | Promociones y descuentos temporales (FR15.2, FR15.3). | `Promocion` | `fechaCaducidad` opcional. |
 | `Concepto` | Catálogo de conceptos facturables (FR12). | `Concepto` | `idImpuesto` es el impuesto por defecto (FR12.2). |
 | `Impuesto` | Tipos impositivos disponibles. | `Impuesto` | — |
 | `TablaTarifas` | Versiones de la tabla de tarifas, cada una con su fecha de efecto (FR11.2). | `TablaTarifas` | — |
 | `RangoTarifa` | Tramos de facturación anual y su precio. | `RangoTarifa` | `maximo` admite `NULL` en el último tramo (sin límite superior). |
-| `RevisionAnual` | Revisiones anuales de tarifa (FR11.3). | `RevisionAnual` | `idAprobadaPor` y `fechaAprobacion` se rellenan al aprobar. Guarda el precio anterior y el nuevo. |
+| `RevisionAnual` | Revisiones anuales de tarifa (FR11.3). | `RevisionAnual` | `UNIQUE (idSuscripcion, anio)`: relanzar la revisión no la duplica (CU-307). `idRegistradaPor` es quien introdujo el dato de facturación. `idAprobadaPor`, `fechaAprobacion` y `comentarioAprobador` se rellenan al aprobar o rechazar, y `fechaEfecto` al aprobar (CU-309). Guarda el precio anterior y el nuevo. |
 
 El gestor responsable de una suscripción no se guarda en `Suscripcion`: es el responsable del cliente según `AsignacionDeCliente`.
+
+**Regla que no se expresa con claves:** quien registró el dato de facturación no puede aprobar el cambio de tarifa (`idAprobadaPor` distinto de `idRegistradaPor`, CU-309). Se comprueba en la aplicación al aprobar.
 
 ## Bloque 4: Presupuestos y facturación
 
@@ -146,7 +148,7 @@ No hay clave foránea entre `Factura` y `PeriodoAdministrativo`: el periodo de u
 | `InformeProgramado` | Informes periódicos (FR30.9). | `InformeProgramado` | — |
 | `DestinatarioDeInforme` | Usuarios autorizados que reciben cada informe programado. | Asociación `destinatarios` | PK compuesta. |
 | `EntidadEmisora` | Turbine como emisor de las facturas (FR31.1). | `EntidadEmisora` | `idDatosFiscales` único. |
-| `ConfiguracionSistema` | Parámetros globales (FR31.2). | `ConfiguracionSistema` | Tiene una única fila. `monedas` es la lista de códigos ISO admitidos. |
+| `ConfiguracionSistema` | Parámetros globales (FR31.2). | `ConfiguracionSistema` | Tiene una única fila. `monedas` es la lista de códigos ISO admitidos. `proximaRevisionAnual` es el día en que el planificador prepara la siguiente revisión anual de tarifas (CU-307). |
 | `DiaFestivo` | Festivos para adaptar los avisos de impago (FR23.3). | `DiaFestivo` | `fecha` única. |
 | `CredencialAPI` | Credenciales de sistemas externos (FR32.2). | `CredencialAPI` | Se guarda el *hash* de la clave, nunca la clave. |
 | `RegistroAuditoria` | Pista de auditoría (RNF-08). | `RegistroAuditoria` | Solo admite inserciones. `idUsuario` es `NULL` si la acción la hizo un proceso automático o la API (`idCredencialAPI`). |

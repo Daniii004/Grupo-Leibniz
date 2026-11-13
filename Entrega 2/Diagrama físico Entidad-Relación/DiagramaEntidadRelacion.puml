@@ -204,6 +204,7 @@ package "3. Suscripciones, tarifas y catálogo" {
     * plazoPagoDias : INT
     * estado : VARCHAR(25)
     motivoPausa : VARCHAR(255)
+    fechaInicioPausa : DATE
     fechaReactivacionPrevista : DATE
   }
 
@@ -263,6 +264,7 @@ package "3. Suscripciones, tarifas y catálogo" {
     --
     * idSuscripcion : INT <<FK>>
     * idTablaTarifas : INT <<FK>>
+    idRegistradaPor : INT <<FK>>
     idAprobadaPor : INT <<FK>>
     * anio : INT
     facturacionAnual : DECIMAL(14,2)
@@ -270,10 +272,18 @@ package "3. Suscripciones, tarifas y catálogo" {
     fechaDato : DATE
     * precioAnterior : DECIMAL(12,2)
     precioNuevo : DECIMAL(12,2)
+    fechaEfecto : DATE
     * estado : VARCHAR(25)
     fechaAprobacion : DATETIME
+    comentarioAprobador : VARCHAR(500)
   }
 }
+
+note bottom of revision
+  UNIQUE (idSuscripcion, anio): una revisión por
+  suscripción y año (CU-307).
+  idAprobadaPor <> idRegistradaPor (CU-309).
+end note
 
 ' ==========================================
 ' BLOQUE 4: PRESUPUESTOS Y FACTURACIÓN
@@ -634,6 +644,7 @@ package "7. Operativa, informes y configuración" {
     * umbralDescuento : DECIMAL(5,2)
     * monedas : VARCHAR(100)
     * reactivacionRequiereConfirmacion : BOOL
+    * proximaRevisionAnual : DATE
   }
 
   entity "DiaFestivo" as diaFestivo {
@@ -736,6 +747,7 @@ suscripcion ||--o{ promocion
 tablaTarifas ||--|{ rangoTarifa
 suscripcion ||--o{ revision
 tablaTarifas ||--o{ revision : "se calcula con <"
+usuario |o--o{ revision : "registra el dato >"
 usuario |o--o{ revision : "aprueba >"
 
 ' ==========================================
