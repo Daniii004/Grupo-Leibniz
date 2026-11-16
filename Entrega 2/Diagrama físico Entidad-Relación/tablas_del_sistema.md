@@ -4,7 +4,7 @@ El diagrama `DiagramaEntidadRelacion.puml` representa el diseño físico de la b
 
 ## Cómo leer el diagrama
 
-* **`*` delante de una columna:** es obligatoria (`NOT NULL`). Sin asterisco, admite `NULL`.
+* **`*` delante de una columna** (en la imagen se dibuja como un punto `●`): es obligatoria (`NOT NULL`). Sin él, admite `NULL`.
 * **`<<PK>>`:** clave primaria. **`<<FK>>`:** clave foránea. **`<<PK, FK>>`:** forma parte de la clave primaria y además es foránea. **`<<UNIQUE>>`:** no admite valores repetidos.
 * **Cardinalidades (notación pata de gallo):**
 
@@ -16,6 +16,8 @@ El diagrama `DiagramaEntidadRelacion.puml` representa el diseño físico de la b
 | `\|\|--o\|` | Uno a cero o uno. |
 | `\|\|--\|\|` | Uno a uno. |
 
+* **Color de las relaciones** (ver la leyenda del diagrama): en negro, las relaciones estructurales entre tablas; en gris, las FK de trazabilidad hacia `Usuario` (quién creó, aprobó, cerró, anuló, programó o ejecutó algo). Son las mismas referencias que en el diagrama de clases van como atributos de tipo `Usuario`; aquí siguen dibujadas, pero en gris para que no tapen el resto.
+* **Disposición:** el diagrama se dibuja de izquierda a derecha (`left to right direction`) y con líneas curvas, de modo que cada etiqueta queda junto a su relación. Las notas con restricciones (`UNIQUE`, `CHECK`) están dentro del paquete de su tabla, a su lado.
 * **Tipos de datos:** `INT` para claves, `DECIMAL` para importes y porcentajes (aritmética exacta, RNF-06), `DATE` para fechas de negocio y `DATETIME` para instantes (se guardan en UTC, RNF-11), `BOOL`, `VARCHAR(n)` y `TEXT`.
 
 ---

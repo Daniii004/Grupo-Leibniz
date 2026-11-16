@@ -11,6 +11,8 @@ Las clases de dominio aparecen en la vista 2/2 solo con su nombre y con fondo gr
 
 Las dos vistas se dibujan de izquierda a derecha (`left to right direction`): en vertical salían imágenes de más de 12.000 píxeles de ancho.
 
+Las dos vistas usan el motor de layout Smetana, que viene integrado en PlantUML (`!pragma layout smetana`). Con las versiones recientes de Graphviz, las clases de asociación de la vista 1/2 descolocaban paquetes y clases; con Smetana el diagrama sale igual en cualquier equipo, sin depender de la versión de Graphviz instalada. A cambio, este motor no dibuja el triángulo que indica el sentido de lectura de las etiquetas (`tiene >`, `contrata >`): el nombre de la asociación sí aparece.
+
 ## Cómo leer los diagramas
 
 * **Paquetes:** cada paquete corresponde a un bloque de casos de uso de la Entrega 1 (bloques 1 a 7).
@@ -18,6 +20,8 @@ Las dos vistas se dibujan de izquierda a derecha (`left to right direction`): en
 * **`[0..1]` en un atributo:** el valor es opcional.
 * **`/` delante de un nombre de asociación:** es derivada, se calcula a partir de otros datos y no se guarda.
 * **Atributos de tipo `Usuario`** (`creadoPor`, `aprobador`, `cerradoPor`, `anuladaPor`...): son asociaciones con `Usuario` que indican quién hizo una operación. Se muestran como atributo, con su multiplicidad entre corchetes, porque dibujadas como líneas más de veinte llegaban a `Usuario` y el diagrama no se podía leer. En la base de datos son claves foráneas a la tabla `Usuario`.
+* **Notas:** cada nota está dentro del paquete de la clase que comenta, para que quede dibujada a su lado.
+* **Colores de las dependencias de la vista 2/2** (ver la leyenda del diagrama): negro entre servicios, azul hacia `ServicioAutorizacion` (comprobación de permisos), morado para los procesos que lanza el `Planificador`, verde hacia los adaptadores de sistemas externos (`PasarelaPago`, `ImportadorMovimientos`, `ProveedorMensajeria`) y gris hacia las clases del modelo de dominio y los DTO.
 * **Estereotipos de la vista 2/2:**
   * `<<control>>`: clase que coordina un caso de uso o un proceso.
   * `<<boundary>>`: clase que habla con un sistema externo.

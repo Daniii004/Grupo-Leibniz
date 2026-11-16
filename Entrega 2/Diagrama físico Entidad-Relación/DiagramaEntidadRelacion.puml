@@ -2,7 +2,8 @@
 
 title Diagrama físico Entidad-Relación - Sistema interno de facturación y cobros de Turbine
 
-skinparam linetype ortho
+left to right direction
+skinparam shadowing false
 skinparam nodesep 40
 skinparam ranksep 60
 skinparam packageStyle rectangle
@@ -14,6 +15,9 @@ hide circle
 '   <<PK>> clave primaria, <<FK>> clave foránea, <<UNIQUE>> valor único
 '   Los enumerados del diagrama de clases se guardan como VARCHAR
 '   La descripción de cada tabla está en tablas_del_sistema.md
+'   Las FK de trazabilidad hacia Usuario (quién creó, aprobó, cerró, anuló...)
+'   se dibujan en gris para que no tapen las relaciones estructurales.
+'   Las notas van dentro del paquete de su tabla para que queden a su lado.
 
 ' ==========================================
 ' BLOQUE 1: RBAC, USUARIOS Y ASIGNACIONES
@@ -277,13 +281,13 @@ package "3. Suscripciones, tarifas y catálogo" {
     fechaAprobacion : DATETIME
     comentarioAprobador : VARCHAR(500)
   }
-}
 
-note bottom of revision
-  UNIQUE (idSuscripcion, anio): una revisión por
-  suscripción y año (CU-307).
-  idAprobadaPor <> idRegistradaPor (CU-309).
-end note
+  note bottom of revision
+    UNIQUE (idSuscripcion, anio): una revisión por
+    suscripción y año (CU-307).
+    idAprobadaPor <> idRegistradaPor (CU-309).
+  end note
+}
 
 ' ==========================================
 ' BLOQUE 4: PRESUPUESTOS Y FACTURACIÓN
@@ -389,17 +393,17 @@ package "4. Presupuestos y facturación" {
     * fechaSolicitud : DATETIME
     fechaResolucion : DATETIME
   }
+
+  note bottom of factura
+    UNIQUE (idSerie, numero): numeración correlativa.
+    Los borradores no tienen serie ni número (FR18.2).
+    idFacturaRectificada <> NULL: es una rectificativa.
+  end note
+
+  note bottom of serie
+    UNIQUE (prefijo, anio)
+  end note
 }
-
-note bottom of factura
-  UNIQUE (idSerie, numero): numeración correlativa.
-  Los borradores no tienen serie ni número (FR18.2).
-  idFacturaRectificada <> NULL: es una rectificativa.
-end note
-
-note bottom of serie
-  UNIQUE (prefijo, anio)
-end note
 
 ' ==========================================
 ' BLOQUE 5: COBROS Y CONCILIACIÓN
@@ -555,13 +559,13 @@ package "6. Comunicaciones e incidencias" {
     * ruta : VARCHAR(255)
     * fechaSubida : DATETIME
   }
-}
 
-note bottom of adjunto
-  CHECK: exactamente una de las cuatro FK
-  (idCliente, idSuscripcion, idDocumento,
-  idIncidencia) tiene valor.
-end note
+  note bottom of adjunto
+    CHECK: exactamente una de las cuatro FK
+    (idCliente, idSuscripcion, idDocumento,
+    idIncidencia) tiene valor.
+  end note
+}
 
 ' ==========================================
 ' BLOQUE 7: OPERATIVA, INFORMES Y CONFIGURACIÓN
@@ -687,12 +691,12 @@ package "7. Operativa, informes y configuración" {
     * fallidos : INT
     errores : TEXT
   }
-}
 
-note bottom of auditoria
-  Solo admite INSERT: no se puede
-  modificar ni borrar (RNF-08, RU-13).
-end note
+  note bottom of auditoria
+    Solo admite INSERT: no se puede
+    modificar ni borrar (RNF-08, RU-13).
+  end note
+}
 
 ' ==========================================
 ' RELACIONES BLOQUE 1 (RBAC, usuarios y asignaciones)
@@ -710,7 +714,7 @@ rol ||--o{ usuario : "define >"
 ' Relación N:M de excepciones de permisos por usuario
 usuario ||--o{ usuarioPermiso : "tiene excepción >"
 permiso ||--o{ usuarioPermiso
-usuario ||--o{ usuarioPermiso : "concedido por >"
+usuario ||--o{ usuarioPermiso #line:9CA3AF;text:6B7280 : "concedido por >"
 
 usuario ||--o{ sesion : "abre >"
 usuario ||--o{ tokenRest : "solicita >"
@@ -729,7 +733,7 @@ cliente ||--o{ favorito
 ' ==========================================
 datosFiscales ||--o| cliente : "identifica >"
 importacion |o--o{ cliente : "crea >"
-usuario ||--o{ importacion : "ejecuta >"
+usuario ||--o{ importacion #line:9CA3AF;text:6B7280 : "ejecuta >"
 cliente ||--o{ etiqueta
 cliente ||--o{ contactoCliente
 personaContacto ||--o{ contactoCliente
@@ -747,14 +751,14 @@ suscripcion ||--o{ promocion
 tablaTarifas ||--|{ rangoTarifa
 suscripcion ||--o{ revision
 tablaTarifas ||--o{ revision : "se calcula con <"
-usuario |o--o{ revision : "registra el dato >"
-usuario |o--o{ revision : "aprueba >"
+usuario |o--o{ revision #line:9CA3AF;text:6B7280 : "registra el dato >"
+usuario |o--o{ revision #line:9CA3AF;text:6B7280 : "aprueba >"
 
 ' ==========================================
 ' RELACIONES BLOQUE 4 (presupuestos y facturación)
 ' ==========================================
 cliente ||--o{ documento : "recibe >"
-usuario ||--o{ documento : "crea >"
+usuario ||--o{ documento #line:9CA3AF;text:6B7280 : "crea >"
 documento ||--|{ lineaDocumento
 concepto |o--o{ lineaDocumento : "basada en <"
 
@@ -768,18 +772,18 @@ serie |o--o{ factura : "numera >"
 categoria |o--o{ factura : "clasifica >"
 factura |o--o{ factura : "rectifica <"
 factura ||--o| documentoPdf : "copia inalterable >"
-usuario |o--o{ periodo : "cierra >"
+usuario |o--o{ periodo #line:9CA3AF;text:6B7280 : "cierra >"
 factura ||--o{ solicitud : "requiere >"
-usuario ||--o{ solicitud : "solicita >"
-usuario |o--o{ solicitud : "resuelve >"
+usuario ||--o{ solicitud #line:9CA3AF;text:6B7280 : "solicita >"
+usuario |o--o{ solicitud #line:9CA3AF;text:6B7280 : "resuelve >"
 
 ' ==========================================
 ' RELACIONES BLOQUE 5 (cobros y conciliación)
 ' ==========================================
 cobro ||--o{ conciliacion : "se aplica en >"
 factura ||--o{ conciliacion : "saldada por >"
-usuario |o--o{ conciliacion : "realiza >"
-usuario |o--o{ conciliacion : "anula >"
+usuario |o--o{ conciliacion #line:9CA3AF;text:6B7280 : "realiza >"
+usuario |o--o{ conciliacion #line:9CA3AF;text:6B7280 : "anula >"
 
 ' ==========================================
 ' RELACIONES BLOQUE 6 (comunicaciones e incidencias)
@@ -791,7 +795,7 @@ personaContacto |o--o{ envio : "recibe >"
 envio |o--o{ envio : "reintento de <"
 envioProgramado |o--o{ envio : "genera >"
 factura ||--o{ envioProgramado
-usuario ||--o{ envioProgramado : "programa >"
+usuario ||--o{ envioProgramado #line:9CA3AF;text:6B7280 : "programa >"
 envioProgramado ||--|{ destEnvioProg
 personaContacto ||--o{ destEnvioProg
 
@@ -801,7 +805,7 @@ cliente |o--o{ tarea
 factura |o--o{ tarea
 
 ' Incidencias y comentarios
-usuario ||--o{ incidenciaInterna : "pone >"
+usuario ||--o{ incidenciaInterna #line:9CA3AF;text:6B7280 : "pone >"
 usuario ||--o{ incidenciaInterna : "responsable de >"
 cliente |o--o{ incidenciaInterna
 factura |o--o{ incidenciaInterna
@@ -820,14 +824,21 @@ incidenciaInterna |o--o{ adjunto
 ' ==========================================
 ' RELACIONES BLOQUE 7 (operativa, informes y configuración)
 ' ==========================================
-usuario ||--o{ accionMasiva : "ejecuta >"
+usuario ||--o{ accionMasiva #line:9CA3AF;text:6B7280 : "ejecuta >"
 informeProgramado ||--|{ destInforme
 usuario ||--o{ destInforme
 informeProgramado |o--o{ informe : "genera >"
 periodo |o--o{ informe : "cubierto por >"
 datosFiscales ||--o| entidadEmisora : "identifica >"
 entidadEmisora ||--|| configuracion
-usuario |o--o{ auditoria : "autor de >"
+usuario |o--o{ auditoria #line:9CA3AF;text:6B7280 : "autor de >"
 credencialApi |o--o{ auditoria : "llamada de >"
+
+legend right
+  <b>Leyenda</b>
+  <b>●</b> columna obligatoria (NOT NULL); sin punto admite NULL
+  <color:#000000><b>━━</b></color>  Relación estructural entre tablas
+  <color:#9CA3AF><b>━━</b></color>  FK de trazabilidad hacia Usuario (quién creó, aprobó, cerró, anuló...)
+endlegend
 
 @enduml

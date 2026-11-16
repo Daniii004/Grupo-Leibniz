@@ -2,6 +2,9 @@
 
 title Diagrama de clases (2/2): servicios y procesos - Sistema interno de facturación y cobros de Turbine
 
+' Mismo motor de layout que la vista 1/2: el resultado no depende de la
+' versión de Graphviz instalada en cada equipo.
+!pragma layout smetana
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
 skinparam shadowing false
@@ -57,6 +60,13 @@ class ConfiguracionSistema <<singleton>> #DDDDDD
 legend right
   Las clases con fondo gris y sin atributos son del modelo
   de dominio (ver DiagramaClasesDominio.puml).
+
+  <b>Color de las dependencias</b>
+  <color:#000000><b>- - -</b></color>  Entre servicios
+  <color:#60A5FA><b>- - -</b></color>  Hacia ServicioAutorizacion (comprobación de permisos)
+  <color:#9333EA><b>- - -</b></color>  Procesos lanzados por el Planificador
+  <color:#15803D><b>- - -</b></color>  Adaptadores de sistemas externos
+  <color:#9CA3AF><b>- - -</b></color>  Hacia clases del modelo de dominio y DTO
 endlegend
 
 ' =====================================================================
@@ -369,80 +379,80 @@ end note
 ' =====================================================================
 
 ' --- Autorización: punto único de decisión ---
-ServicioAutorizacion ..> Usuario : <<use>>
-ServicioAutorizacion ..> AsignacionCliente : <<use>>
-ServicioAutorizacion ..> SolicitudAprobacion : <<use>>
-ServicioUsuarios ..> ServicioAutorizacion : <<use>>
-ServicioAsignaciones ..> ServicioAutorizacion : <<use>>
-ServicioClientes ..> ServicioAutorizacion : <<use>>
-ServicioSuscripciones ..> ServicioAutorizacion : <<use>>
-ServicioCatalogo ..> ServicioAutorizacion : <<use>>
-ServicioRevisionAnual ..> ServicioAutorizacion : <<use>>
-ServicioFacturacion ..> ServicioAutorizacion : <<use>>
-ServicioAprobaciones ..> ServicioAutorizacion : <<use>>
-ServicioConciliacion ..> ServicioAutorizacion : <<use>>
-ServicioDeuda ..> ServicioAutorizacion : <<use>>
-ServicioComunicaciones ..> ServicioAutorizacion : <<use>>
-ServicioNotificaciones ..> ServicioAutorizacion : <<use>>
-ServicioIncidencias ..> ServicioAutorizacion : <<use>>
-BuscadorGlobal ..> ServicioAutorizacion : <<use>>
-PanelFinanciero ..> ServicioAutorizacion : <<use>>
-ServicioInformes ..> ServicioAutorizacion : <<use>>
-ServicioConfiguracion ..> ServicioAutorizacion : <<use>>
-ServicioAuditoria ..> ServicioAutorizacion : <<use>>
+ServicioAutorizacion ..> Usuario #line:9CA3AF;text:6B7280 : <<use>>
+ServicioAutorizacion ..> AsignacionCliente #line:9CA3AF;text:6B7280 : <<use>>
+ServicioAutorizacion ..> SolicitudAprobacion #line:9CA3AF;text:6B7280 : <<use>>
+ServicioUsuarios ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioAsignaciones ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioClientes ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioSuscripciones ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioCatalogo ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioRevisionAnual ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioFacturacion ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioAprobaciones ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioConciliacion ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioDeuda ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioComunicaciones ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioNotificaciones ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioIncidencias ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+BuscadorGlobal ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+PanelFinanciero ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioInformes ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioConfiguracion ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
+ServicioAuditoria ..> ServicioAutorizacion #line:60A5FA;text:3B82F6 : <<use>>
 
 ' --- Acceso y usuarios ---
-ServicioAutenticacion ..> Usuario : <<use>>
-ServicioAutenticacion ..> Sesion : <<create>>
-ServicioAutenticacion ..> TokenRestablecimiento : <<create>>
-ServicioAutenticacion ..> ConfiguracionSistema : <<use>>
-ServicioUsuarios ..> Usuario : <<create>>
-ServicioUsuarios ..> Rol : <<use>>
-ServicioUsuarios ..> Permiso : <<use>>
-ServicioUsuarios ..> PreferenciasNotificacion : <<use>>
-ServicioUsuarios ..> ConfiguracionSistema : <<use>>
+ServicioAutenticacion ..> Usuario #line:9CA3AF;text:6B7280 : <<use>>
+ServicioAutenticacion ..> Sesion #line:9CA3AF;text:6B7280 : <<create>>
+ServicioAutenticacion ..> TokenRestablecimiento #line:9CA3AF;text:6B7280 : <<create>>
+ServicioAutenticacion ..> ConfiguracionSistema #line:9CA3AF;text:6B7280 : <<use>>
+ServicioUsuarios ..> Usuario #line:9CA3AF;text:6B7280 : <<create>>
+ServicioUsuarios ..> Rol #line:9CA3AF;text:6B7280 : <<use>>
+ServicioUsuarios ..> Permiso #line:9CA3AF;text:6B7280 : <<use>>
+ServicioUsuarios ..> PreferenciasNotificacion #line:9CA3AF;text:6B7280 : <<use>>
+ServicioUsuarios ..> ConfiguracionSistema #line:9CA3AF;text:6B7280 : <<use>>
 ServicioUsuarios ..> ServicioAutenticacion : <<use>>
-ServicioAsignaciones ..> AsignacionCliente : <<create>>
-ServicioAsignaciones ..> Tarea : <<use>>
+ServicioAsignaciones ..> AsignacionCliente #line:9CA3AF;text:6B7280 : <<create>>
+ServicioAsignaciones ..> Tarea #line:9CA3AF;text:6B7280 : <<use>>
 
 ' --- Clientes, suscripciones y catálogo ---
-ServicioClientes ..> Cliente : <<create>>
-ServicioClientes ..> ImportacionCSV : <<create>>
-ServicioClientes ..> Adjunto : <<use>>
-ServicioSuscripciones ..> Suscripcion : <<create>>
+ServicioClientes ..> Cliente #line:9CA3AF;text:6B7280 : <<create>>
+ServicioClientes ..> ImportacionCSV #line:9CA3AF;text:6B7280 : <<create>>
+ServicioClientes ..> Adjunto #line:9CA3AF;text:6B7280 : <<use>>
+ServicioSuscripciones ..> Suscripcion #line:9CA3AF;text:6B7280 : <<create>>
 ServicioSuscripciones ..> ServicioNotificaciones : <<use>>
-ServicioCatalogo ..> Concepto : <<use>>
-ServicioCatalogo ..> TablaTarifas : <<use>>
-ServicioRevisionAnual ..> RevisionAnual : <<create>>
-ServicioRevisionAnual ..> TablaTarifas : <<use>>
+ServicioCatalogo ..> Concepto #line:9CA3AF;text:6B7280 : <<use>>
+ServicioCatalogo ..> TablaTarifas #line:9CA3AF;text:6B7280 : <<use>>
+ServicioRevisionAnual ..> RevisionAnual #line:9CA3AF;text:6B7280 : <<create>>
+ServicioRevisionAnual ..> TablaTarifas #line:9CA3AF;text:6B7280 : <<use>>
 ServicioRevisionAnual ..> ServicioNotificaciones : <<use>>
 
 ' --- Facturación y aprobaciones ---
-ServicioFacturacion ..> Presupuesto : <<create>>
-ServicioFacturacion ..> Factura : <<create>>
-ServicioFacturacion ..> FacturaRectificativa : <<create>>
-ServicioFacturacion ..> PeriodoAdministrativo : <<use>>
-ServicioFacturacion ..> SerieFacturacion : <<use>>
-ServicioFacturacion ..> ConfiguracionSistema : <<use>>
+ServicioFacturacion ..> Presupuesto #line:9CA3AF;text:6B7280 : <<create>>
+ServicioFacturacion ..> Factura #line:9CA3AF;text:6B7280 : <<create>>
+ServicioFacturacion ..> FacturaRectificativa #line:9CA3AF;text:6B7280 : <<create>>
+ServicioFacturacion ..> PeriodoAdministrativo #line:9CA3AF;text:6B7280 : <<use>>
+ServicioFacturacion ..> SerieFacturacion #line:9CA3AF;text:6B7280 : <<use>>
+ServicioFacturacion ..> ConfiguracionSistema #line:9CA3AF;text:6B7280 : <<use>>
 ServicioFacturacion ..> ServicioAprobaciones : <<use>>
 ServicioFacturacion ..> ServicioComunicaciones : <<use>>
-ServicioFacturacionRecurrente ..> Suscripcion : <<use>>
-ServicioFacturacionRecurrente ..> Factura : <<create>>
+ServicioFacturacionRecurrente ..> Suscripcion #line:9CA3AF;text:6B7280 : <<use>>
+ServicioFacturacionRecurrente ..> Factura #line:9CA3AF;text:6B7280 : <<create>>
 ServicioFacturacionRecurrente ..> ServicioComunicaciones : <<use>>
-ServicioAprobaciones ..> SolicitudAprobacion : <<create>>
+ServicioAprobaciones ..> SolicitudAprobacion #line:9CA3AF;text:6B7280 : <<create>>
 ServicioAprobaciones ..> ServicioNotificaciones : <<use>>
 
 ' --- Cobros y deuda ---
 PasarelaPago <|.. StripeSimulado
-ServicioConciliacion ..> PasarelaPago : <<use>>
-ServicioConciliacion ..> ImportadorMovimientos : <<use>>
-ServicioConciliacion ..> Cobro : <<use>>
-ServicioConciliacion ..> Conciliacion : <<create>>
+ServicioConciliacion ..> PasarelaPago #line:15803D;text:15803D : <<use>>
+ServicioConciliacion ..> ImportadorMovimientos #line:15803D;text:15803D : <<use>>
+ServicioConciliacion ..> Cobro #line:9CA3AF;text:6B7280 : <<use>>
+ServicioConciliacion ..> Conciliacion #line:9CA3AF;text:6B7280 : <<create>>
 ServicioConciliacion ..> ServicioNotificaciones : <<use>>
-ServicioDeuda ..> Factura : <<use>>
-ServicioDeuda ..> EstadoDeuda : <<create>>
-ServicioDeuda ..> CalendarioLaboral : <<use>>
-ServicioDeuda ..> ConfiguracionSistema : <<use>>
+ServicioDeuda ..> Factura #line:9CA3AF;text:6B7280 : <<use>>
+ServicioDeuda ..> EstadoDeuda #line:9CA3AF;text:6B7280 : <<create>>
+ServicioDeuda ..> CalendarioLaboral #line:9CA3AF;text:6B7280 : <<use>>
+ServicioDeuda ..> ConfiguracionSistema #line:9CA3AF;text:6B7280 : <<use>>
 ServicioDeuda ..> ServicioComunicaciones : <<use>>
 ServicioDeuda ..> ServicioAprobaciones : <<use>>
 ServicioDeuda ..> ServicioNotificaciones : <<use>>
@@ -451,48 +461,48 @@ ServicioDeuda ..> ServicioNotificaciones : <<use>>
 ProveedorMensajeria <|.. CorreoSMTP
 ProveedorMensajeria <|.. WhatsAppAPI
 ProveedorMensajeria <|.. MensajeriaSimulada
-ServicioComunicaciones ..> ProveedorMensajeria : <<use>>
-ServicioComunicaciones ..> Plantilla : <<use>>
-ServicioComunicaciones ..> Envio : <<create>>
-ServicioComunicaciones ..> EnvioProgramado : <<create>>
+ServicioComunicaciones ..> ProveedorMensajeria #line:15803D;text:15803D : <<use>>
+ServicioComunicaciones ..> Plantilla #line:9CA3AF;text:6B7280 : <<use>>
+ServicioComunicaciones ..> Envio #line:9CA3AF;text:6B7280 : <<create>>
+ServicioComunicaciones ..> EnvioProgramado #line:9CA3AF;text:6B7280 : <<create>>
 ServicioComunicaciones ..> ServicioIncidencias : <<use>>
-ServicioNotificaciones ..> PreferenciasNotificacion : <<use>>
-ServicioNotificaciones ..> Tarea : <<use>>
-ServicioNotificaciones ..> Notificacion : <<create>>
-ServicioNotificaciones ..> ProveedorMensajeria : <<use>>
-ServicioIncidencias ..> IncidenciaInterna : <<create>>
-ServicioIncidencias ..> Comentario : <<create>>
-ServicioIncidencias ..> Adjunto : <<use>>
+ServicioNotificaciones ..> PreferenciasNotificacion #line:9CA3AF;text:6B7280 : <<use>>
+ServicioNotificaciones ..> Tarea #line:9CA3AF;text:6B7280 : <<use>>
+ServicioNotificaciones ..> Notificacion #line:9CA3AF;text:6B7280 : <<create>>
+ServicioNotificaciones ..> ProveedorMensajeria #line:15803D;text:15803D : <<use>>
+ServicioIncidencias ..> IncidenciaInterna #line:9CA3AF;text:6B7280 : <<create>>
+ServicioIncidencias ..> Comentario #line:9CA3AF;text:6B7280 : <<create>>
+ServicioIncidencias ..> Adjunto #line:9CA3AF;text:6B7280 : <<use>>
 ServicioIncidencias ..> ServicioNotificaciones : <<use>>
 
 ' --- Operativa, informes, configuración, API y procesos ---
-BuscadorGlobal ..> FiltroGuardado : <<create>>
-PanelFinanciero ..> Factura : <<use>>
-PanelFinanciero ..> ObjetivoFacturacion : <<use>>
-PanelFinanciero ..> TipoCambio : <<use>>
-PanelFinanciero ..> MetricasFinancieras : <<create>>
-ServicioInformes ..> Informe : <<create>>
-ServicioInformes ..> PaqueteGestoria : <<create>>
-ServicioInformes ..> InformeProgramado : <<create>>
-ServicioInformes ..> AccionMasiva : <<use>>
-ServicioConfiguracion ..> ConfiguracionSistema : <<use>>
-ServicioConfiguracion ..> SerieFacturacion : <<use>>
-ServicioConfiguracion ..> CalendarioLaboral : <<use>>
-ServicioConfiguracion ..> EjecucionProceso : <<use>>
-APIDeudas ..> CredencialAPI : <<use>>
+BuscadorGlobal ..> FiltroGuardado #line:9CA3AF;text:6B7280 : <<create>>
+PanelFinanciero ..> Factura #line:9CA3AF;text:6B7280 : <<use>>
+PanelFinanciero ..> ObjetivoFacturacion #line:9CA3AF;text:6B7280 : <<use>>
+PanelFinanciero ..> TipoCambio #line:9CA3AF;text:6B7280 : <<use>>
+PanelFinanciero ..> MetricasFinancieras #line:9CA3AF;text:6B7280 : <<create>>
+ServicioInformes ..> Informe #line:9CA3AF;text:6B7280 : <<create>>
+ServicioInformes ..> PaqueteGestoria #line:9CA3AF;text:6B7280 : <<create>>
+ServicioInformes ..> InformeProgramado #line:9CA3AF;text:6B7280 : <<create>>
+ServicioInformes ..> AccionMasiva #line:9CA3AF;text:6B7280 : <<use>>
+ServicioConfiguracion ..> ConfiguracionSistema #line:9CA3AF;text:6B7280 : <<use>>
+ServicioConfiguracion ..> SerieFacturacion #line:9CA3AF;text:6B7280 : <<use>>
+ServicioConfiguracion ..> CalendarioLaboral #line:9CA3AF;text:6B7280 : <<use>>
+ServicioConfiguracion ..> EjecucionProceso #line:9CA3AF;text:6B7280 : <<use>>
+APIDeudas ..> CredencialAPI #line:9CA3AF;text:6B7280 : <<use>>
 APIDeudas ..> ServicioDeuda : <<use>>
 APIDeudas ..> ServicioAuditoria : <<use>>
-ServicioAuditoria ..> RegistroAuditoria : <<create>>
-Planificador ..> ServicioFacturacionRecurrente : <<use>>
-Planificador ..> ServicioSuscripciones : <<use>>
-Planificador ..> ServicioDeuda : <<use>>
-Planificador ..> ServicioComunicaciones : <<use>>
-Planificador ..> ServicioConciliacion : <<use>>
-Planificador ..> ServicioInformes : <<use>>
-Planificador ..> ServicioNotificaciones : <<use>>
-Planificador ..> ServicioAsignaciones : <<use>>
-Planificador ..> ServicioAutenticacion : <<use>>
-Planificador ..> ServicioRevisionAnual : <<use>>
+ServicioAuditoria ..> RegistroAuditoria #line:9CA3AF;text:6B7280 : <<create>>
+Planificador ..> ServicioFacturacionRecurrente #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioSuscripciones #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioDeuda #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioComunicaciones #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioConciliacion #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioInformes #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioNotificaciones #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioAsignaciones #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioAutenticacion #line:9333EA;text:9333EA : <<use>>
+Planificador ..> ServicioRevisionAnual #line:9333EA;text:9333EA : <<use>>
 Planificador "1" -- "0..*" EjecucionProceso : registra >
 
 @enduml

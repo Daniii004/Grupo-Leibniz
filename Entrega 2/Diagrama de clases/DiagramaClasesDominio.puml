@@ -2,12 +2,18 @@
 
 title Diagrama de clases (1/2): modelo de dominio - Sistema interno de facturación y cobros de Turbine
 
+' Motor de layout Smetana (integrado en PlantUML): con Graphviz reciente las
+' clases de asociación (PermisoIndividual, VinculoContacto) descolocan paquetes
+' y clases. Con Smetana el diagrama sale igual en cualquier equipo.
+!pragma layout smetana
 skinparam classAttributeIconSize 0
 skinparam packageStyle rectangle
 skinparam shadowing false
 set namespaceSeparator none
 hide empty members
 left to right direction
+
+' Las notas van dentro del paquete de su clase para que queden a su lado.
 
 ' =====================================================================
 ' BLOQUE 1: USUARIOS, ROLES Y ASIGNACIONES (FR1, FR2, FR3)
@@ -89,23 +95,23 @@ package "1. Usuarios, roles y asignaciones" {
         + estaVigente(fecha : Date) : boolean
         + finalizar() : void
     }
-}
 
-note right of Rol
-  RBAC jerárquico (FR3): un rol tiene sus permisos
-  más los del rol del que hereda (heredaDe).
-  - LECTOR: VER_CLIENTES_ASIGNADOS, CREAR_FACTURA,
-    CONCILIAR_COBRO, CREAR_INCIDENCIA...
-  - ADMINISTRADOR heredaDe LECTOR: VER_TODOS_LOS_CLIENTES,
-    ASIGNAR_CLIENTES, APROBAR_SOLICITUDES, CERRAR_PERIODO...
-  - SUPERADMINISTRADOR heredaDe ADMINISTRADOR:
-    CONFIGURAR_SISTEMA, GESTIONAR_TARIFAS, REABRIR_PERIODO,
-    APROBAR_OPERACIONES_CRITICAS...
-  Usuario.tienePermiso() mira primero si hay un
-  PermisoIndividual y, si no, los permisos efectivos del rol.
-  {debe existir al menos un usuario activo con
-  rol SUPERADMINISTRADOR} (ACT-01)
-end note
+  note right of Rol
+    RBAC jerárquico (FR3): un rol tiene sus permisos
+    más los del rol del que hereda (heredaDe).
+    - LECTOR: VER_CLIENTES_ASIGNADOS, CREAR_FACTURA,
+      CONCILIAR_COBRO, CREAR_INCIDENCIA...
+    - ADMINISTRADOR heredaDe LECTOR: VER_TODOS_LOS_CLIENTES,
+      ASIGNAR_CLIENTES, APROBAR_SOLICITUDES, CERRAR_PERIODO...
+    - SUPERADMINISTRADOR heredaDe ADMINISTRADOR:
+      CONFIGURAR_SISTEMA, GESTIONAR_TARIFAS, REABRIR_PERIODO,
+      APROBAR_OPERACIONES_CRITICAS...
+    Usuario.tienePermiso() mira primero si hay un
+    PermisoIndividual y, si no, los permisos efectivos del rol.
+    {debe existir al menos un usuario activo con
+    rol SUPERADMINISTRADOR} (ACT-01)
+  end note
+}
 
 ' =====================================================================
 ' BLOQUE 2: CLIENTES Y CONTACTOS (FR4 - FR8)
@@ -211,13 +217,13 @@ package "2. Clientes y contactos" {
         - importados : int
         - errores : List<String>
     }
-}
 
-note bottom of Cliente
-  {identificadorFiscal único entre clientes} (FR6.1)
-  getResponsable() se deriva de la AsignacionCliente
-  vigente (la temporal tiene prioridad sobre la principal).
-end note
+  note bottom of Cliente
+    {identificadorFiscal único entre clientes} (FR6.1)
+    getResponsable() se deriva de la AsignacionCliente
+    vigente (la temporal tiene prioridad sobre la principal).
+  end note
+}
 
 ' =====================================================================
 ' BLOQUE 3: SUSCRIPCIONES, TARIFAS Y CATÁLOGO (FR9 - FR12, FR15)
@@ -325,12 +331,12 @@ package "3. Suscripciones, tarifas y catálogo" {
         + aprobar(aprobador : Usuario, fechaEfecto : Date) : void
         + rechazar(aprobador : Usuario, motivo : String) : void
     }
-}
 
-note bottom of RevisionAnual
-  {una revisión por suscripción y año} (CU-307)
-  {aprobadaPor <> registradaPor} (CU-309)
-end note
+  note bottom of RevisionAnual
+    {una revisión por suscripción y año} (CU-307)
+    {aprobadaPor <> registradaPor} (CU-309)
+  end note
+}
 
 ' =====================================================================
 ' BLOQUE 4: PRESUPUESTOS, FACTURACIÓN Y CICLO DOCUMENTAL (FR13 - FR20)
@@ -501,6 +507,15 @@ package "4. Presupuestos y facturación" {
         + rechazar(aprobador : Usuario, comentario : String) : void
         + reasignar(nuevoAprobador : Usuario) : void
     }
+
+  note bottom of SolicitudAprobacion
+    {solicitante <> aprobador}
+    Separación de funciones (FR16.2): aplica a
+    cualquier rol, incluido el superadministrador.
+    El aprobador necesita APROBAR_SOLICITUDES; los descuentos
+    sobre el umbral y los incobrables requieren
+    APROBAR_OPERACIONES_CRITICAS (FR16.5, FR24.3).
+  end note
 }
 
 ' =====================================================================
@@ -911,16 +926,6 @@ Factura "1" *-- "0..1" DocumentoPDF : copiaInalterable
 Factura "0..*" --> "0..1" CategoriaProyecto
 Factura "0..*" --> "0..*" PeriodoAdministrativo : /perteneceA
 Factura "1" -- "0..*" SolicitudAprobacion : aprobaciones
-
-note bottom of SolicitudAprobacion
-  {solicitante <> aprobador}
-  Separación de funciones (FR16.2): aplica a
-  cualquier rol, incluido el superadministrador.
-  El aprobador necesita APROBAR_SOLICITUDES; los descuentos
-  sobre el umbral y los incobrables requieren
-  APROBAR_OPERACIONES_CRITICAS (FR16.5, FR24.3).
-end note
-
 ' --- Bloque 5 ---
 Cobro "1" -- "0..*" Conciliacion : seAplicaEn >
 Conciliacion "0..*" -- "1" Factura : salda >

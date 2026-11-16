@@ -2,6 +2,26 @@
 
 title Diagrama de Componentes - Turbine
 
+skinparam shadowing false
+skinparam defaultFontSize 13
+skinparam nodesep 45
+skinparam ranksep 70
+skinparam component {
+    BackgroundColor #F8FAFC
+    BorderColor #334155
+}
+skinparam package {
+    BorderColor #64748B
+    FontSize 14
+}
+
+' Las conexiones se colorean por tipo para poder seguirlas (ver la leyenda):
+'   azul    -> peticiones de la capa de presentación
+'   negro   -> dependencias entre componentes de negocio
+'   morado  -> procesos automáticos lanzados por el Planificador
+'   verde   -> servicios externos
+'   gris    -> persistencia (IDatabase, IArchivos)
+
 package "Capa de Presentación" {
     [Aplicación Web] as web
     [Sistema Brain (Externo)] as brain
@@ -55,23 +75,23 @@ package "Servicios Externos" {
 }
 
 ' --- Conexiones de Frontend ---
-web -(0- auth : IAuth
-web -(0- roles : IRoles
-web -(0- clientes : IClientes
-web -(0- tarifas : ITarifas
-web -(0- facturas : IFacturas
-web -(0- suscripciones : ISuscripciones
-web -(0- cobros : ICobros
-web -(0- deuda : IDeuda
-web -(0- comunicacion : IComunicacion
-web -(0- notificaciones : INotificaciones
-web -(0- incidencias : IIncidencias
-web -(0- reportes : IReportes
-web -(0- config : IConfiguracion
-web -(0- auditoria : IAuditoria
+web -(0- auth #line:2563EB;text:2563EB : IAuth
+web -(0- roles #line:2563EB;text:2563EB : IRoles
+web -(0- clientes #line:2563EB;text:2563EB : IClientes
+web -(0- tarifas #line:2563EB;text:2563EB : ITarifas
+web -(0- facturas #line:2563EB;text:2563EB : IFacturas
+web -(0- suscripciones #line:2563EB;text:2563EB : ISuscripciones
+web -(0- cobros #line:2563EB;text:2563EB : ICobros
+web -(0- deuda #line:2563EB;text:2563EB : IDeuda
+web -(0- comunicacion #line:2563EB;text:2563EB : IComunicacion
+web -(0- notificaciones #line:2563EB;text:2563EB : INotificaciones
+web -(0- incidencias #line:2563EB;text:2563EB : IIncidencias
+web -(0- reportes #line:2563EB;text:2563EB : IReportes
+web -(0- config #line:2563EB;text:2563EB : IConfiguracion
+web -(0- auditoria #line:2563EB;text:2563EB : IAuditoria
 
 ' --- Conexiones de la API ---
-brain -(0- api : IConsultaAPI
+brain -(0- api #line:2563EB;text:2563EB : IConsultaAPI
 api -(0- deuda : IDeuda
 
 ' --- Conexiones Internas de Negocio ---
@@ -99,6 +119,8 @@ facturas -(0- comunicacion : IComunicacion
 deuda -(0- comunicacion : IComunicacion
 ' Un rebote de correo abre una incidencia interna (FR25.3)
 comunicacion -(0- incidencias : IIncidencias
+' Para saber a qué contacto de facturación del cliente se envía cada mensaje
+comunicacion -(0- clientes : IClientes
 
 ' Avisos internos a los empleados (FR26)
 facturas -(0- notificaciones : INotificaciones
@@ -109,43 +131,43 @@ incidencias -(0- notificaciones : INotificaciones
 notificaciones -(0- comunicacion : IComunicacion
 
 ' Procesos automáticos en segundo plano (FR33, actor Temporizador)
-planificador -(0- auth : IAuth
-planificador -(0- roles : IRoles
-planificador -(0- tarifas : ITarifas
-planificador -(0- suscripciones : ISuscripciones
-planificador -(0- facturas : IFacturas
-planificador -(0- cobros : ICobros
-planificador -(0- deuda : IDeuda
-planificador -(0- comunicacion : IComunicacion
-planificador -(0- reportes : IReportes
+planificador -(0- auth #line:9333EA;text:9333EA : IAuth
+planificador -(0- roles #line:9333EA;text:9333EA : IRoles
+planificador -(0- tarifas #line:9333EA;text:9333EA : ITarifas
+planificador -(0- suscripciones #line:9333EA;text:9333EA : ISuscripciones
+planificador -(0- facturas #line:9333EA;text:9333EA : IFacturas
+planificador -(0- cobros #line:9333EA;text:9333EA : ICobros
+planificador -(0- deuda #line:9333EA;text:9333EA : IDeuda
+planificador -(0- comunicacion #line:9333EA;text:9333EA : IComunicacion
+planificador -(0- reportes #line:9333EA;text:9333EA : IReportes
 
 ' --- Conexiones a Persistencia ---
-auth -(0- db : IDatabase
-roles -(0- db : IDatabase
-clientes -(0- db : IDatabase
-tarifas -(0- db : IDatabase
-suscripciones -(0- db : IDatabase
-facturas -(0- db : IDatabase
-cobros -(0- db : IDatabase
-deuda -(0- db : IDatabase
-comunicacion -(0- db : IDatabase
-notificaciones -(0- db : IDatabase
-incidencias -(0- db : IDatabase
-reportes -(0- db : IDatabase
-api -(0- db : IDatabase
-config -(0- db : IDatabase
-auditoria -(0- db : IDatabase
-planificador -(0- db : IDatabase
+auth -(0- db #line:B8B8B8;text:999999 : IDatabase
+roles -(0- db #line:B8B8B8;text:999999 : IDatabase
+clientes -(0- db #line:B8B8B8;text:999999 : IDatabase
+tarifas -(0- db #line:B8B8B8;text:999999 : IDatabase
+suscripciones -(0- db #line:B8B8B8;text:999999 : IDatabase
+facturas -(0- db #line:B8B8B8;text:999999 : IDatabase
+cobros -(0- db #line:B8B8B8;text:999999 : IDatabase
+deuda -(0- db #line:B8B8B8;text:999999 : IDatabase
+comunicacion -(0- db #line:B8B8B8;text:999999 : IDatabase
+notificaciones -(0- db #line:B8B8B8;text:999999 : IDatabase
+incidencias -(0- db #line:B8B8B8;text:999999 : IDatabase
+reportes -(0- db #line:B8B8B8;text:999999 : IDatabase
+api -(0- db #line:B8B8B8;text:999999 : IDatabase
+config -(0- db #line:B8B8B8;text:999999 : IDatabase
+auditoria -(0- db #line:B8B8B8;text:999999 : IDatabase
+planificador -(0- db #line:B8B8B8;text:999999 : IDatabase
 
-clientes -(0- files : IArchivos
-suscripciones -(0- files : IArchivos
-facturas -(0- files : IArchivos
-incidencias -(0- files : IArchivos
-reportes -(0- files : IArchivos
+clientes -(0- files #line:B8B8B8;text:999999 : IArchivos
+suscripciones -(0- files #line:B8B8B8;text:999999 : IArchivos
+facturas -(0- files #line:B8B8B8;text:999999 : IArchivos
+incidencias -(0- files #line:B8B8B8;text:999999 : IArchivos
+reportes -(0- files #line:B8B8B8;text:999999 : IArchivos
 
 ' --- Conexiones a Servicios Externos ---
-cobros -(0- stripe : IPagos
-comunicacion -(0- mail : IMensajeriaExterna
+cobros -(0- stripe #line:15803D;text:15803D : IPagos
+comunicacion -(0- mail #line:15803D;text:15803D : IMensajeriaExterna
 
 note as NotaTransversales
   <b>Interfaces transversales</b>
@@ -157,5 +179,14 @@ note as NotaTransversales
   * <b>IConfiguracion</b>: Autenticación, Emisión de Facturas y
     Gestión de Deuda leen plazos, umbrales y dominio (FR31.2).
 end note
+
+legend right
+  <b>Color de las conexiones</b>
+  <color:#2563EB><b>━━</b></color>  Peticiones de la capa de presentación
+  <color:#000000><b>━━</b></color>  Dependencias entre componentes de negocio
+  <color:#9333EA><b>━━</b></color>  Procesos automáticos (Planificador de Tareas)
+  <color:#15803D><b>━━</b></color>  Servicios externos
+  <color:#B8B8B8><b>━━</b></color>  Persistencia (IDatabase, IArchivos)
+endlegend
 
 @enduml
