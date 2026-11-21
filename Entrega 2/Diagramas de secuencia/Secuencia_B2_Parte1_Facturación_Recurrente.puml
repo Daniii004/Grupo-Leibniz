@@ -1,0 +1,157 @@
+@startuml Secuencia_Facturacion_Recurrente
+title Diagrama: Facturación recurrente con prorrateos y promociones (CU-403, CU-404)
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor Sistema as Sys
+actor Usuario as User
+
+participant PlanificadorFacturacion as PF
+participant ServicioFacturacion as SF
+participant ServicioSuscripciones as SS
+participant Suscripcion as S
+participant Cliente as C
+participant ServicioProrrateosPromociones as SPP
+participant ServicioSeries as SR
+participant ServicioDocumentos as SD
+participant ServicioAuditoria as SA
+participant ServicioNotificaciones as SN
+participant Factura as F
+
+== Generar facturación recurrente (CU-403) ==
+
+Sys -> PF : alcanzarFechaProgramada()
+activate PF
+PF -> SF : iniciarProcesoFacturacion(ciclo, fecha)
+activate SF
+
+SF -> SS : buscarSuscripcionesPendientes(ciclo, fecha)
+activate SS
+SS --> SF : suscripcionesPendientes
+deactivate SS
+
+alt No hay suscripciones pendientes
+   SF -> SA : registrarLoteSinElementos(ciclo, fecha)
+   SF -> SN : informarLoteSinElementos()
+   SF --> PF : Proceso finalizado sin facturas
+
+else Existen suscripciones pendientes
+    loop Por cada suscripción pendiente
+     SF -> SS : obtenerDatosFacturacion(idSuscripcion)
+     activate SS
+     SS -> S : consultarPlanCicloPrecioYFechas()
+     activate S
+     S --> SS : datosSuscripcion
+     deactivate S
+     SS --> SF : datosFacturacion
+     deactivate SS
+
+     SF -> C : comprobarDatosFiscales()
+     activate C
+     C --> SF : datosFiscales
+     deactivate C
+
+     alt Datos fiscales incompletos o erróneos
+      SF -> SA : registrarIncidenciaFiscal(idSuscripcion)
+      SF --> SF : Omitir suscripción y continuar lote
+
+     else Datos fiscales correctos
+
+      group Aplicar prorrateos y promociones (CU-404)
+       SF -> SPP : calcularImporte(datosFacturacion)
+       activate SPP
+       SPP -> SPP : comprobarFechaInicioYPromociones()
+
+       opt Suscripción iniciada después del día 1
+        SPP -> SPP : calcularDiasDeServicioRestantes()
+        SPP -> SPP : calcularImporteProporcional()
+       end
+
+       alt Promoción o descuento vigente
+        SPP -> SPP : validarFechasYCondiciones()
+        SPP -> SPP : aplicarDescuento()
+        SPP -> SS : actualizarDuracionPromocion(idSuscripcion)
+
+        else Promoción o descuento caducado
+         SPP -> SPP : utilizarPrecioHabitual()
+        end
+
+        SPP -> SPP : calcularImpuestosYTotal()
+        SPP --> SF : desglosePrecioBaseAjusteYTotal
+        deactivate SPP
+       end
+
+       alt Error de cálculo o importe negativo
+        SF -> SA : registrarErrorCalculo(idSuscripcion)
+        SF -> SN : avisarRevisionCalculo(idSuscripcion)
+        SF --> SF : Omitir suscripción y continuar lote
+
+       else Descuento supera límite o requiere aprobación
+        SF -> SF : marcarPendienteDeAprobacion()
+        SF -> SN : notificarPendienteAprobacion(idSuscripcion)
+        SF -> SA : registrarPendienteAprobacion(idSuscripcion)
+
+       else Importe cero
+        SF -> SF : comprobarPoliticaImporteCero()
+
+       alt Política permite factura de cero euros
+        SF -> SF : prepararFacturaConTotalCero()
+        SF -> SS : consumirMesPromocion(idSuscripcion)
+
+       else Política no emite factura de cero euros
+        SF -> SS : consumirMesPromocion(idSuscripcion)
+        SF -> SA : registrarPeriodoPromocionalSinCobro(idSuscripcion)
+       end
+
+      else Importe positivo y válido
+       SF -> SF : prepararFacturaConImporteCalculado()
+      end
+
+      opt Factura preparada y autorizada para emisión
+       SF -> SR : asignarSerieYNumeroCorrelativo()
+       activate SR
+
+       alt Error de numeración o serie no disponible
+        SR --> SF : Error de numeración
+        SF -> SA : registrarErrorNumeracion(idSuscripcion)
+        SF -> SN : avisarErrorDeSerie()
+        SF --> PF : Detener lote y conservar facturas emitidas
+
+       else Número asignado correctamente
+        SR --> SF : serieYNumero
+        deactivate SR
+
+        SF -> F : guardarFacturaEmitida(datos, serie, numero)
+        F --> SF : facturaEmitida
+
+        SF -> SD : generarYGuardarPDF(idFactura)
+        activate SD
+
+        alt Error al generar o guardar PDF
+         SD --> SF : Error de documento
+         SF -> SA : registrarFalloPDF(idFactura)
+         SF -> SD : programarReintentoPDF(idFactura)
+         SF -> SS : actualizarProximaFechaFacturacion(idSuscripcion)
+
+         else PDF generado y guardado
+          SD --> SF : PDF almacenado
+          SF -> SS : actualizarProximaFechaFacturacion(idSuscripcion)
+          SF -> SA : registrarFacturaEmitida(idFactura)
+         end
+
+         deactivate SD
+        end
+      end
+   end
+end
+
+    SF -> SA : generarResumenDelLote()
+    SF -> SN : informarResultadoDelLote()
+    SF --> PF : Proceso finalizado
+    deactivate SF
+    deactivate PF
+end
+
+@enduml
