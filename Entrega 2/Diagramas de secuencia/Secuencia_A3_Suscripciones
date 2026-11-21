@@ -18,14 +18,18 @@ participant ServicioAuditoria as SA
 User -> SS : solicitarAlta(cliente)
 activate SS
 SS -> Cliente : obtenerValoresSugeridos()
+activate Cliente
 Cliente --> SS : plan, tarifaPorRango, plazoEstandar
+deactivate Cliente
 SS --> User : Mostrar formulario con valores sugeridos
 deactivate SS
 
 User -> SS : crearSuscripción(cliente, datosSub)
 activate SS
 SS -> Cliente : tieneDatosFiscalesCompletos()
+activate Cliente
 Cliente --> SS : completo : boolean
+deactivate Cliente
 
 alt completo == false
    SS --> User : Error("Faltan datos fiscales para facturar")
@@ -36,7 +40,9 @@ alt completo == false
 
 else completo == true
    SS -> Sub : calcularResumenInicial(datosSub)
+   activate Sub
    Sub --> SS : ResumenSuscripción
+   deactivate Sub
    SS --> User : Mostrar resumen de alta
 
    note right of User
@@ -72,10 +78,9 @@ else completo == true
    else Usuario cancela
     User -> SS : cancelarAlta()
     SS --> User : Alta cancelada
+    deactivate SS
    end
 end
-
-deactivate SS
 
 
 == Modificar suscripción (CU-302) ==
@@ -83,7 +88,9 @@ deactivate SS
 User -> SS : solicitarModificación(idSuscripción)
 activate SS
 SS -> Sub : obtenerDatos()
+activate Sub
 Sub --> SS : datosActuales
+deactivate Sub
 SS --> User : Mostrar datos modificables
 deactivate SS
 
@@ -100,7 +107,9 @@ alt Se intenta cambiar la tarifa
 
 else Cambios permitidos
    SS -> Sub : validarCambios(cambios)
+   activate Sub
    Sub --> SS : cambiosValidos : boolean
+   deactivate Sub
 
    alt cambiosValidos == true
     SS --> User : Mostrar resumen de cambios
@@ -116,6 +125,7 @@ else Cambios permitidos
     SS -> SA : registrarEvento("Modificación de suscripción")
    else cambiosValidos == false
     SS --> User : Error("Los cambios no son válidos")
+    deactivate SS
    end
 end
 deactivate SS
@@ -141,6 +151,7 @@ alt pausaValida == true
 
 else pausaValida == false
    SS --> User : Error("Debe indicar el motivo de la pausa")
+   deactivate SS
 end
 deactivate SS
 
