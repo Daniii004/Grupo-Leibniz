@@ -1,0 +1,91 @@
+@startuml Secuencia_Facturación_Puntual
+title Diagrama de secuencia: Presupuesto a factura puntual, validación y emisión documental (CU-408) - [Parte 2]
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor Sistema as Sys
+
+participant ServicioFacturacion as SF
+participant Factura as F
+participant ServicioSeries as SS
+participant ServicioDocumentos as SD
+participant ServicioNotificaciones as SN
+
+== Gestionar estados, numeración y documentación (CU-408) ==
+
+Sys -> SF : confirmarEmision(idFactura)
+activate SF
+
+SF -> SS : iniciarEmision(idFactura)
+activate SS
+
+SS -> SS : comprobarSerieDisponible()
+SS -> SS : reservarSiguienteNumero()
+
+alt Conflicto o error de numeración
+    SS -> SS : cancelarReservaSinConsumirNumero()
+    SS --> SF : Error de numeración
+    SF -> F : mantenerEstado("Borrador")
+    SF -> SN : notificarErrorEmision(idFactura)
+    SF --> Sys : Emisión cancelada por error de numeración
+
+else Numeración reservada correctamente
+    SS -> F : actualizarEstado("Emitida")
+    F --> SS : estadoActualizado
+
+    SS -> SD : generarPDF(datosFactura, serie, numero)
+    activate SD
+
+    alt Error al generar el PDF
+     SD --> SS : Error de generación
+     SS -> SS : revertirNumeracionYEstado()
+     SS -> F : mantenerEstado("Borrador")
+     SS --> SF : Emisión cancelada
+     SF -> SN : notificarErrorGeneracionPDF(idFactura)
+     SF --> Sys : Error al generar el PDF, factura en borrador
+
+    else PDF generado correctamente
+     SD -> SD : guardarCopiaInalterablePDF()
+     SD -> SD : registrarFechaClienteUsuarioYDestinatarios()
+     SD --> SS : PDF almacenado correctamente
+     deactivate SD
+
+     SS -> F : confirmarEmision(serie, numero, fecha, PDF)
+     F --> SS : facturaEmitida
+     SS -> SS : confirmarTransaccion()
+     SS --> SF : Emisión completada
+     deactivate SS
+     SF -> SN : notificarEmisionCorrecta(idFactura)
+     SF --> Sys : Factura emitida correctamente
+     deactivate SF
+    end
+end
+
+
+== Gestionar cambios posteriores de estado ==
+
+opt Se produce un cambio posterior de estado
+    Sys -> SF : solicitarCambioEstado(idFactura, nuevoEstado)
+    activate SF
+
+    SF -> F : actualizarEstado(nuevoEstado)
+    F --> SF : estadoActualizado
+    SF -> F : conservarNumeroFechaYPDFOriginal()
+    F --> SF : datosOriginalesConservados
+    SF --> Sys : Estado de factura actualizado
+
+    deactivate SF
+end
+
+note over F,SD
+    Los borradores no consumen numeración.
+    La serie, el número, el estado y el PDF
+    se confirman como una única operación.
+    Si falla la numeración o el PDF, se revierte
+    la operación y se conserva el estado anterior.
+    Los cambios posteriores no modifican el PDF original.
+end note
+
+@enduml
