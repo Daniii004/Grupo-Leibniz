@@ -1,5 +1,5 @@
 @startuml Secuencia_Suscripciones
-title Diagrama de secuencia: Ciclo de vida de suscripciones y cambios programados (CU-301..306)
+title Diagrama de secuencia: Ciclo de vida de suscripciones y cambios programados (CU-301, CU-302, CU-303, CU-304, CU-305, CU-306)
 
 autonumber
 skinparam shadowing false
