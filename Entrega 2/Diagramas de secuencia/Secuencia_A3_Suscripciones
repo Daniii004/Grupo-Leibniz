@@ -1,0 +1,231 @@
+@startuml Secuencia_Suscripciones
+title Diagrama de secuencia: Ciclo de vida de suscripciones y cambios programados (CU-301..306)
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor Usuario as User
+actor "Temporizador del Sistema" as Temp
+participant ServicioSuscripciones as SS
+participant Cliente as Cliente
+participant Suscripción as Sub
+participant ServicioHistorial as SH
+participant ServicioAuditoria as SA
+
+== Alta de suscripción (CU-301) ==
+
+User -> SS : solicitarAlta(cliente)
+activate SS
+SS -> Cliente : obtenerValoresSugeridos()
+Cliente --> SS : plan, tarifaPorRango, plazoEstandar
+SS --> User : Mostrar formulario con valores sugeridos
+deactivate SS
+
+User -> SS : crearSuscripción(cliente, datosSub)
+activate SS
+SS -> Cliente : tieneDatosFiscalesCompletos()
+Cliente --> SS : completo : boolean
+
+alt completo == false
+   SS --> User : Error("Faltan datos fiscales para facturar")
+   note right of SS
+    No se crea la suscripción
+    ni se programa la recurrencia
+   end note
+
+else completo == true
+   SS -> Sub : calcularResumenInicial(datosSub)
+   Sub --> SS : ResumenSuscripción
+   SS --> User : Mostrar resumen de alta
+
+   note right of User
+    Primera factura, prorrateo si procede,
+    siguiente mensualidad y condiciones
+   end note
+
+   alt Usuario confirma el alta
+    User -> SS : confirmarAlta()
+    SS -> Sub : programarActivación(fechaInicio)
+
+    note right of SS
+     Si la fecha es futura, no se generan
+     facturas ni recordatorios hasta esa fecha
+    end note
+
+    opt fechaInicio <= fechaActual
+     SS -> Cliente : cambiarEstado(Activo)
+     SS -> Sub : programarFacturaciónRecurrente()
+    end
+
+   opt Excepción comercial
+    SS -> Sub : registrarExcepcionComercial(excepcion)
+    note right of SS
+     Si supera el umbral configurado,
+     la factura queda pendiente de aprobación
+    end note
+   end
+
+   SS -> SH : registrarAlta(datosSub)
+   SS -> SA : registrarEvento("Alta de suscripción")
+
+   else Usuario cancela
+    User -> SS : cancelarAlta()
+    SS --> User : Alta cancelada
+   end
+end
+
+deactivate SS
+
+
+== Modificar suscripción (CU-302) ==
+
+User -> SS : solicitarModificación(idSuscripción)
+activate SS
+SS -> Sub : obtenerDatos()
+Sub --> SS : datosActuales
+SS --> User : Mostrar datos modificables
+deactivate SS
+
+User -> SS : modificarSuscripción(cambios)
+activate SS
+
+alt Se intenta cambiar la tarifa
+   SS -> User : Error("La tarifa no se modifica en este caso")
+   note right of SS
+    El cambio de tarifa se realiza
+    mediante la revisión anual
+    o una excepción aprobada
+   end note
+
+else Cambios permitidos
+   SS -> Sub : validarCambios(cambios)
+   Sub --> SS : cambiosValidos : boolean
+
+   alt cambiosValidos == true
+    SS --> User : Mostrar resumen de cambios
+    User -> SS : confirmarModificación()
+    SS -> Sub : aplicarCambios(cambios)
+    SS --> User : Modificación realizada
+
+    opt Cambio de responsable
+     SS -> Cliente : transferirTareasPendientes()
+    end
+
+    SS -> SH : registrarModificación(cambios)
+    SS -> SA : registrarEvento("Modificación de suscripción")
+   else cambiosValidos == false
+    SS --> User : Error("Los cambios no son válidos")
+   end
+end
+deactivate SS
+
+== Pausar suscripción (CU-303) ==
+
+User -> SS : solicitarPausa(idSuscripción, motivo, fechaReactivación)
+activate SS
+SS -> Sub : validarPausa(motivo)
+Sub --> SS : pausaValida : boolean
+
+alt pausaValida == true
+   SS -> Sub : cambiarEstado(Pausada)
+   SS -> Sub : detenerFacturaciónRecurrente()
+
+   opt Se indicó fecha de reactivación
+    SS -> Temp : programarAvisoReactivación(fechaReactivación)
+   end
+
+   SS -> SH : registrarPausa(motivo)
+   SS -> SA : registrarEvento("Pausa de suscripción")
+   SS -> User : Pausa confirmada
+
+else pausaValida == false
+   SS --> User : Error("Debe indicar el motivo de la pausa")
+end
+deactivate SS
+
+note right of SS
+ Las facturas pendientes anteriores
+ a la pausa siguen siendo cobrables
+end note
+
+== Reactivar suscripción (CU-304) ==
+
+User -> SS : solicitarReactivación(idSuscripción)
+activate SS
+SS -> Sub : obtenerDatosPausa()
+Sub --> SS : datosPausa
+
+alt Se requiere confirmación
+   SS --> User : Solicitar confirmación de reactivación
+   User -> SS : confirmarReactivación()
+end
+
+SS -> Sub : cambiarEstado(Activo)
+SS -> Sub : reanudarFacturaciónRecurrente()
+SS -> SH : registrarReactivación()
+SS -> SA : registrarEvento("Reactivación de suscripción")
+SS --> User : Suscripción reactivada
+deactivate SS 
+
+== Solicitar baja de suscripción (CU-305) ==
+
+User -> SS : solicitarBaja(idSuscripción, fechaBaja)
+activate SS
+SS -> Sub : consultarFacturasPendientes()
+Sub --> SS : facturasPendientes
+SS -> Sub : cambiarEstado(Baja_Solicitada)
+SS -> Sub : programarBaja(fechaBaja)
+SS -> SH : registrarSolicitudBaja(fechaBaja)
+SS -> SA : registrarEvento("Solicitud de baja")
+SS --> User : Baja solicitada
+
+note right of SS
+ La facturación recurrente se cierra
+ en la fecha de la baja.
+ Las deudas pendientes no se eliminan.
+end note
+deactivate SS
+
+== Ejecutar cambios programados (CU-306) ==
+
+Temp -> SS : ejecutarTareasProgramadas(fechaActual)
+activate SS
+
+loop Para cada suscripción programada
+   alt Fecha de inicio alcanzada
+    SS -> Sub : comprobarDatosFiscales()
+    Sub --> SS : datosFiscalesCompletos : boolean
+
+    alt datosFiscalesCompletos == true
+     SS -> Cliente : cambiarEstado(Activo)
+     SS -> Sub : iniciarFacturaciónRecurrente()
+    else datosFiscalesCompletos == false
+     SS -> Cliente : notificarDatosFiscalesPendientes()
+    end
+   else Fecha de reactivación alcanzada
+    SS -> Cliente : notificarReactivación()
+    
+    opt No requiere confirmación
+     SS -> Sub : cambiarEstado(Activo)
+     SS -> Sub : reanudarFacturaciónRecurrente()
+    end
+
+   else Fecha de baja alcanzada
+    SS -> Sub : consultarFacturasPendientes()
+    Sub --> SS : facturasPendientes
+
+    alt facturasPendientes == 0
+     SS -> Sub : cambiarEstado(BAJA)
+     SS -> Sub : cerrarFacturaciónRecurrente()
+    else facturasPendientes > 0
+     SS -> Sub : mantenerBajaSolicitada()
+    end
+   end
+end
+
+SS -> SH : registrarEjecuciónProgramada()
+SS -> SA : registrarEvento("Ejecución de tareas programadas")
+deactivate SS
+
+@enduml
