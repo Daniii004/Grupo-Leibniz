@@ -1,0 +1,193 @@
+@startuml Secuencia_A1_AltaDesactivacionUsuario
+title Diagrama de secuencia: Alta de usuario, autorización por roles y desactivación con cierre de sesiones (CU-101, CU-103, CU-104, CU-110, CU-112)
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "actor : Usuario" as User
+participant "sU : ServicioUsuarios" as SU <<control>>
+participant "sAuth : ServicioAutorizacion" as SAuth <<control>>
+participant "cfg : ConfiguracionSistema" as Cfg <<singleton>>
+participant "sAutn : ServicioAutenticacion" as SAutn <<control>>
+participant "s : Sesion" as Sesion
+participant "sAud : ServicioAuditoria" as SAud <<control>>
+
+' =====================================================================
+' 1. ALTA DE USUARIO (CU-101) con autorización centralizada (CU-110)
+' =====================================================================
+== Alta de usuario (CU-101) ==
+
+User -> SU : registrarUsuario(actor, nombre, email, r)
+activate SU
+
+' 1. Autorización centralizada por permiso (CU-110). No existe autorregistro.
+SU -> SAuth : autorizar(actor, "CREAR_USUARIO")
+activate SAuth
+SAuth -> SAuth : actor.tienePermiso("CREAR_USUARIO")
+note right of SAuth
+  Punto único de decisión en el servidor:
+  se pregunta por el permiso, no por el rol
+  (permisos del rol + permisos individuales).
+  Ante cualquier duda o fallo se deniega.
+end note
+
+alt permiso denegado (CU-112)
+    SAuth -> SAud : registrar(actor, "ACCESO_DENEGADO", "Usuario", null, "CREAR_USUARIO")
+    activate SAud
+    SAud --> SAuth : registro : RegistroAuditoria
+    deactivate SAud
+    SAuth --> SU : AccesoDenegado
+    deactivate SAuth
+    note right of SU
+      La petición se rechaza en el servidor
+      aunque la acción fuera visible en la
+      interfaz o se llamara por URL directa.
+      No se modifica ningún dato.
+    end note
+    SU --> User : Error("No tiene permiso para crear usuarios")
+
+else permiso concedido
+    activate SAuth
+    SAuth --> SU
+    deactivate SAuth
+
+    ' 2. Validación del dominio corporativo (@turbine)
+    SU -> Cfg : getDominioCorreo()
+    activate Cfg
+    Cfg --> SU : dominio : String
+    deactivate Cfg
+    SU -> SU : validarDominio(email, dominio)
+
+    alt el correo no pertenece al dominio @turbine
+        SU --> User : Error("Solo se admiten correos corporativos @turbine")
+
+    else dominio correcto
+        SU -> SU : buscarPorEmail(email)
+
+        alt ya existe una cuenta con ese correo
+            note right of SU
+              No se crea otra cuenta. Si la existente
+              está desactivada, se informa para que el
+              administrador valore reactivarla.
+            end note
+            SU --> User : Error("Ya existe una cuenta con ese correo")
+
+        else correo libre
+            create participant "u : Usuario" as U
+            SU -> U : <<create>>(nombre, email)
+            SU -> U : asignarRol(r)
+            activate U
+            U --> SU
+            deactivate U
+
+            ' 3. Invitación con enlace temporal para fijar la contraseña
+            SU -> SAutn : solicitarRestablecimiento(email)
+            activate SAutn
+            create participant "tok : TokenRestablecimiento" as Tok
+            SAutn -> Tok : <<create>>(u, fechaCaducidad)
+            note right of SAutn
+              Envía al correo corporativo la
+              invitación con el enlace temporal
+              de activación de la cuenta.
+            end note
+            SAutn --> SU : tok : TokenRestablecimiento
+            deactivate SAutn
+
+            SU -> SAud : registrar(actor, "ALTA_USUARIO", "Usuario", u.id, detalle)
+            activate SAud
+            SAud --> SU : registro : RegistroAuditoria
+            deactivate SAud
+
+            SU --> User : u : Usuario (invitación enviada)
+        end
+    end
+end
+
+deactivate SU
+
+' =====================================================================
+' 2. DESACTIVACIÓN DE CUENTA (CU-103) y CIERRE DE SESIONES (CU-104)
+' =====================================================================
+== Desactivación de cuenta (CU-103) y cierre de sesiones (CU-104) ==
+
+User -> SU : desactivarUsuario(actor, u)
+activate SU
+
+SU -> SAuth : autorizar(actor, "DESACTIVAR_USUARIO")
+activate SAuth
+SAuth --> SU
+deactivate SAuth
+
+SU -> SU : esUnicoSuperadministrador(u)
+
+alt u es la única cuenta de Superadministrador
+    SU --> User : Error("Debe existir al menos un Superadministrador")
+
+else se puede desactivar
+    SU -> SAuth : clientesVisibles(u)
+    activate SAuth
+    SAuth --> SU : clientes : List<Cliente>
+    deactivate SAuth
+
+    opt clientes no está vacía
+        note right of SU
+          Se avisa de que hay clientes asignados y se
+          ofrece reasignarlos antes de confirmar (CU-107,
+          ServicioAsignaciones.transferirCliente). Si no se
+          reasignan, quedan pendientes de responsable.
+        end note
+    end
+
+    ' Desactivación lógica: la cuenta NO se borra
+    SU -> U : desactivar()
+    activate U
+    note right of U
+      activo = false. Se conservan el usuario,
+      sus facturas, comentarios y su historial
+      de auditoría (trazabilidad, RNF-08).
+    end note
+    U --> SU
+    deactivate U
+
+    ' CU-104: cierre inmediato de todas las sesiones activas
+    SU -> SAutn : cerrarSesionesDe(u)
+    activate SAutn
+    SAutn -> SAutn : sesionesActivas(u)
+
+    alt el usuario no tiene sesiones activas
+        note right of SAutn : No se realiza ninguna acción adicional
+    else tiene sesiones activas
+        loop para cada sesión s activa de u (cualquier dispositivo)
+            SAutn -> Sesion : cerrar()
+            activate Sesion
+            note right of Sesion : activa = false (token invalidado)
+            Sesion --> SAutn
+            deactivate Sesion
+        end
+
+        SAutn -> SAud : registrar(null, "CERRAR_SESIONES", "Usuario", u.id, numSesiones)
+        activate SAud
+        SAud --> SAutn : registro : RegistroAuditoria
+        deactivate SAud
+    end
+
+    note right of SAutn
+      Aunque falle el cierre de alguna sesión,
+      la cuenta ya está desactivada y
+      ServicioAutorizacion rechaza cualquier
+      petición posterior de u.
+    end note
+    SAutn --> SU
+    deactivate SAutn
+
+    SU -> SAud : registrar(actor, "DESACTIVAR_USUARIO", "Usuario", u.id, detalle)
+    activate SAud
+    SAud --> SU : registro : RegistroAuditoria
+    deactivate SAud
+
+    SU --> User : Cuenta desactivada y sesiones cerradas
+end
+
+deactivate SU
+@enduml

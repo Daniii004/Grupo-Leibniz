@@ -1,0 +1,403 @@
+@startuml Secuencia_B3_CobrosImpagosDisputa
+title Diagrama de secuencia: Conciliación de cobros, seguimiento de impagos y disputa/incobrable (CU-501, CU-502, CU-503, CU-504, CU-505, CU-601)
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "Temporizador\n(Scheduler)" as Timer <<Sistema>>
+actor "actor : Usuario" as User
+actor "aprobador : Usuario" as Aprob
+participant "plan : Planificador" as Plan <<control>>
+participant "sConc : ServicioConciliacion" as SConc <<control>>
+participant "pasarela : PasarelaPago" as Pasarela <<interface>>
+participant "sAuth : ServicioAutorizacion" as SAuth <<control>>
+participant "c : Cobro" as Cobro
+participant "f : Factura" as Factura
+participant "sDeuda : ServicioDeuda" as SDeuda <<control>>
+participant "cal : CalendarioLaboral" as Cal
+participant "sCom : ServicioComunicaciones" as SCom <<control>>
+participant "sInc : ServicioIncidencias" as SInc <<control>>
+participant "sAprob : ServicioAprobaciones" as SAprob <<control>>
+participant "sNotif : ServicioNotificaciones" as SNotif <<control>>
+participant "sAud : ServicioAuditoria" as SAud <<control>>
+
+' =====================================================================
+' 1. RECEPCIÓN DE EVENTOS DE PAGO CON IDEMPOTENCIA (CU-501)
+' =====================================================================
+== Recepción de eventos de pago con idempotencia (CU-501) ==
+
+Timer -> Plan : ejecutarConciliacion()
+activate Plan
+Plan -> SConc : sincronizarPasarela(desde)
+activate SConc
+
+SConc -> Pasarela : obtenerEventos(desde)
+activate Pasarela
+Pasarela --> SConc : cobros : List<Cobro>
+deactivate Pasarela
+
+loop para cada cobro c en cobros
+    ' Idempotencia: idExterno es único ({unique} en Cobro)
+    SConc -> SConc : esDuplicado(c)
+
+    alt es duplicado (idExterno ya registrado)
+        note right of SConc
+          El evento se descarta: no se contabiliza
+          dos veces el mismo cobro. Se anota en
+          el log técnico y se pasa al siguiente.
+        end note
+    else evento nuevo
+        SConc -> SConc : registrarCobro(c)
+        SConc -> SConc : conciliarAutomaticamente(c)
+        ref over SConc, Factura
+          Secuencia_ConciliarCobros (CU-501):
+          referencia + importe exactos -> f PAGADA,
+          importe distinto -> PARCIALMENTE_CONCILIADA,
+          sin coincidencia -> c PENDIENTE_CONCILIACION
+        end ref
+        note right of Factura
+          Si f pasa a PAGADA deja de entrar en los
+          flujos de recordatorios e impagos.
+        end note
+    end
+end
+
+SConc --> Plan : exec : EjecucionProceso
+deactivate SConc
+deactivate Plan
+
+' =====================================================================
+' 2. CONCILIACIÓN MANUAL Y REVERSIÓN (CU-502)
+' =====================================================================
+== Conciliación manual (CU-502) ==
+
+User -> SConc : conciliarManualmente(actor, c, f, importe)
+activate SConc
+
+SConc -> SAuth : autorizar(actor, "CONCILIAR_COBROS", f.cliente)
+activate SAuth
+SAuth --> SConc
+deactivate SAuth
+
+SConc -> Cobro : importeSinAplicar()
+activate Cobro
+Cobro --> SConc : disponible : Decimal
+deactivate Cobro
+
+opt importe != f.importePendiente (pago de menos o de más)
+    SConc --> User : Aviso("Discrepancia de importe")
+    note right of SConc
+      El usuario confirma la asociación del
+      pago incompleto o con descuadre.
+    end note
+end
+
+create participant "con : Conciliacion" as Conc
+SConc -> Conc : <<create>>(c, f, importe, "MANUAL", actor)
+
+SConc -> Factura : actualizarImportePendiente()
+activate Factura
+note right of Factura
+  pendiente == 0 -> PAGADA (se suspenden recordatorios)
+  pendiente > 0  -> PARCIALMENTE_CONCILIADA
+end note
+Factura --> SConc
+deactivate Factura
+
+note right of Cobro : Estado -> CONCILIADO o PARCIALMENTE_APLICADO
+
+SConc -> SAud : registrar(actor, "CONCILIAR_MANUAL", "Factura", f.id, detalle)
+activate SAud
+SAud --> SConc : registro : RegistroAuditoria
+deactivate SAud
+
+SConc --> User : con : Conciliacion
+deactivate SConc
+
+== Reversión de una conciliación errónea (CU-502, ext. 1a) ==
+
+User -> SConc : anular(actor, con, motivo)
+activate SConc
+
+SConc -> SAuth : autorizar(actor, "ANULAR_CONCILIACION", f.cliente)
+activate SAuth
+SAuth --> SConc
+deactivate SAuth
+
+alt motivo vacío
+    SConc --> User : Error("El motivo de anulación es obligatorio")
+
+else motivo informado
+    SConc -> Conc : anular(actor, motivo)
+    activate Conc
+    note right of Conc
+      anulada = true, anuladaPor = actor.
+      El cobro NO se borra: queda el movimiento
+      y vuelve a PENDIENTE_CONCILIACION.
+    end note
+    Conc --> SConc
+    deactivate Conc
+
+    SConc -> Factura : actualizarImportePendiente()
+    activate Factura
+    note right of Factura
+      Se restaura el saldo pendiente:
+      ENVIADA, VENCIDA o PARCIALMENTE_CONCILIADA
+    end note
+    Factura --> SConc
+    deactivate Factura
+
+    SConc -> SAud : registrar(actor, "ANULAR_CONCILIACION", "Factura", f.id, motivo)
+    activate SAud
+    SAud --> SConc : registro : RegistroAuditoria
+    deactivate SAud
+
+    SConc --> User : Conciliación anulada
+end
+
+deactivate SConc
+
+' =====================================================================
+' 3. AVISOS DE IMPAGO RESPETANDO CALENDARIO LABORAL (CU-503)
+' =====================================================================
+== Avisos de impago respetando el calendario laboral (CU-503) ==
+
+Timer -> Plan : ejecutarRecordatorios()
+activate Plan
+
+Plan -> SDeuda : revisarPausasVencidas(fecha)
+activate SDeuda
+loop para cada factura con pausa cuya fechaRevisionPausa <= fecha
+    SDeuda -> SNotif : notificar(responsable, "REVISION_PAUSA", mensaje)
+    activate SNotif
+    SNotif --> SDeuda : notif : Notificacion
+    deactivate SNotif
+end
+SDeuda --> Plan
+deactivate SDeuda
+
+Plan -> SDeuda : enviarAvisosImpago(fecha)
+activate SDeuda
+
+create participant "exec : EjecucionProceso" as Exec
+SDeuda -> Exec : <<create>>("AVISOS_IMPAGO")
+
+SDeuda -> Cal : esLaborable(fecha)
+activate Cal
+Cal --> SDeuda : laborable : boolean
+deactivate Cal
+
+alt laborable == false (fin de semana o festivo)
+    SDeuda -> Cal : siguienteLaborable(fecha)
+    activate Cal
+    Cal --> SDeuda : proxima : Date
+    deactivate Cal
+    note right of SDeuda : Los avisos se posponen al siguiente día laborable
+
+else día laborable
+    loop para cada factura f VENCIDA cuya cadencia (cadenciaImpagoDias) toca hoy
+        alt f.seguimientoPausado == true o f.estado == EN_DISPUTA
+            note right of SDeuda : Se omite: seguimiento pausado
+        else seguimiento activo
+            SDeuda -> SCom : enviarAviso(f, AVISO_IMPAGO)
+            activate SCom
+            SCom --> SDeuda : envio : Envio
+            deactivate SCom
+
+            alt envio.estado == FALLIDO (rebote)
+                note right of SCom
+                  ServicioComunicaciones registra el
+                  rebote y abre la incidencia de entrega
+                  (crearPorRebote), igual que en
+                  Secuencia_EmitirFactura.
+                end note
+                SDeuda -> Exec : registrarError(f.numero, "Rebote de envío")
+                activate Exec
+                Exec --> SDeuda
+                deactivate Exec
+            else enviado
+                SDeuda -> SNotif : notificar(responsable, "AVISO_IMPAGO_ENVIADO", mensaje)
+                activate SNotif
+                SNotif --> SDeuda : notif : Notificacion
+                deactivate SNotif
+            end
+        end
+    end
+end
+
+note right of Exec
+  Un fallo en una factura no detiene el resto.
+  Cierra con COMPLETADO o COMPLETADO_CON_ERRORES
+end note
+SDeuda --> Plan : exec : EjecucionProceso
+deactivate SDeuda
+deactivate Plan
+
+' =====================================================================
+' 4. DISPUTA Y PAUSA POR INCIDENCIA (CU-504, CU-601)
+' =====================================================================
+== Marcar factura en disputa (CU-504) ==
+
+User -> SDeuda : marcarEnDisputa(actor, f, motivo, revision)
+activate SDeuda
+
+SDeuda -> SAuth : autorizar(actor, "GESTIONAR_DISPUTA", f.cliente)
+activate SAuth
+SAuth --> SDeuda
+deactivate SAuth
+
+alt motivo vacío o revision no válida
+    SDeuda --> User : ErrorValidacion("Falta el motivo o la fecha de revisión")
+
+else datos completos
+    SDeuda -> Factura : marcarEnDisputa(motivo, revision)
+    activate Factura
+    note right of Factura
+      Estado -> EN_DISPUTA, seguimientoPausado = true.
+      Sigue contando como pendiente de cobro.
+    end note
+    Factura --> SDeuda
+    deactivate Factura
+
+    SDeuda -> SAud : registrar(actor, "MARCAR_EN_DISPUTA", "Factura", f.id, motivo + revision)
+    activate SAud
+    SAud --> SDeuda : registro : RegistroAuditoria
+    deactivate SAud
+
+    SDeuda --> User : Factura en disputa (recordatorios suspendidos)
+end
+
+deactivate SDeuda
+
+== Incidencia que afecta al cobro (CU-601) ==
+
+User -> SInc : crear(actor, titulo, descripcion, f.cliente)
+activate SInc
+
+SInc -> SAuth : autorizar(actor, "GESTIONAR_INCIDENCIAS", f.cliente)
+activate SAuth
+SAuth --> SInc
+deactivate SAuth
+
+create participant "i : IncidenciaInterna" as Inc
+SInc -> Inc : <<create>>(titulo, descripcion, prioridad, afectaCobro)
+
+opt i.afectaCobro == true (factura f asociada)
+    SInc -> SDeuda : pausarSeguimiento(actor, f, "Incidencia " + i.id, revision)
+    activate SDeuda
+    SDeuda -> Factura : pausarSeguimiento(motivo, revision)
+    activate Factura
+    Factura --> SDeuda
+    deactivate Factura
+    SDeuda --> SInc
+    deactivate SDeuda
+end
+
+SInc -> SNotif : notificar(responsable, "INCIDENCIA_ASIGNADA", mensaje)
+activate SNotif
+SNotif --> SInc : notif : Notificacion
+deactivate SNotif
+
+SInc --> User : i : IncidenciaInterna
+deactivate SInc
+
+User -> SInc : cerrar(actor, i, resolucion)
+activate SInc
+
+alt resolucion vacía
+    SInc --> User : Error("La resolución es obligatoria para cerrar")
+else resolución informada
+    SInc -> Inc : cerrar(resolucion)
+    activate Inc
+    Inc --> SInc
+    deactivate Inc
+
+    opt i.afectaCobro == true
+        SInc -> SDeuda : reanudarSeguimiento(actor, f)
+        activate SDeuda
+        SDeuda -> Factura : reanudarSeguimiento()
+        activate Factura
+        note right of Factura : Vuelve a ENVIADA o VENCIDA y se\nreactivan los recordatorios
+        Factura --> SDeuda
+        deactivate Factura
+        SDeuda --> SInc
+        deactivate SDeuda
+    end
+
+    SInc --> User : Incidencia cerrada
+end
+
+deactivate SInc
+
+' =====================================================================
+' 5. DECLARACIÓN DE DEUDA INCOBRABLE (CU-505)
+' =====================================================================
+== Declaración de deuda incobrable (CU-505) ==
+
+User -> SDeuda : solicitarIncobrable(actor, f, motivo)
+activate SDeuda
+
+SDeuda -> SAuth : autorizar(actor, "SOLICITAR_INCOBRABLE", f.cliente)
+activate SAuth
+SAuth --> SDeuda
+deactivate SAuth
+
+SDeuda -> SAprob : solicitar(actor, f, DEUDA_INCOBRABLE, motivo)
+activate SAprob
+create participant "sol : SolicitudAprobacion" as Sol
+SAprob -> Sol : <<create>>(f, actor, DEUDA_INCOBRABLE, motivo)
+SAprob -> SNotif : notificar(aprobador, "APROBACION_PENDIENTE", mensaje)
+activate SNotif
+SNotif --> SAprob : notif : Notificacion
+deactivate SNotif
+SAprob --> SDeuda : sol : SolicitudAprobacion
+deactivate SAprob
+
+SDeuda -> SAud : registrar(actor, "SOLICITAR_INCOBRABLE", "Factura", f.id, motivo)
+activate SAud
+SAud --> SDeuda : registro : RegistroAuditoria
+deactivate SAud
+
+SDeuda --> User : sol : SolicitudAprobacion (pendiente)
+deactivate SDeuda
+
+Aprob -> SAprob : resolver(aprobador, sol, aprobada, comentario)
+activate SAprob
+
+SAprob -> SAuth : verificarSeparacionFunciones(sol, aprobador)
+activate SAuth
+note right of SAuth : El solicitante no puede aprobar\nsu propia solicitud
+SAuth --> SAprob
+deactivate SAuth
+
+alt aprobada == true
+    SAprob -> Sol : aprobar(aprobador, comentario)
+    activate Sol
+    Sol --> SAprob
+    deactivate Sol
+    note right of Factura
+      Estado -> INCOBRABLE (nunca PAGADA).
+      Se detienen definitivamente los avisos de impago.
+    end note
+else aprobada == false
+    SAprob -> Sol : rechazar(aprobador, comentario)
+    activate Sol
+    Sol --> SAprob
+    deactivate Sol
+    note right of Factura : Conserva su estado previo (VENCIDA o EN_DISPUTA)
+end
+
+SAprob -> SAud : registrar(aprobador, "RESOLVER_INCOBRABLE", "Factura", f.id, comentario)
+activate SAud
+SAud --> SAprob : registro : RegistroAuditoria
+deactivate SAud
+
+SAprob -> SNotif : notificar(sol.solicitante, "RESOLUCION_INCOBRABLE", comentario)
+activate SNotif
+SNotif --> SAprob : notif : Notificacion
+deactivate SNotif
+
+SAprob --> Aprob : Solicitud resuelta
+deactivate SAprob
+@enduml

@@ -1,0 +1,260 @@
+@startuml Secuencia_B4_PanelInformesConfiguracionAPI
+title Diagrama de secuencia: Panel financiero, informes/configuración y consulta de deudas vía API (CU-704, CU-707, CU-710, CU-711, CU-713)
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "actor : Usuario" as User
+actor "Cliente API\n(Brain)" as ApiCli <<Sistema>>
+actor "Temporizador\n(Scheduler)" as Timer <<Sistema>>
+participant "panel : PanelFinanciero" as Panel <<control>>
+participant "sInf : ServicioInformes" as SInf <<control>>
+participant "sCfg : ServicioConfiguracion" as SCfg <<control>>
+participant "api : APIDeudas" as API <<boundary>>
+participant "plan : Planificador" as Plan <<control>>
+participant "sAuth : ServicioAutorizacion" as SAuth <<control>>
+participant "buscador : BuscadorGlobal" as Busc <<control>>
+participant "o : ObjetivoFacturacion" as Obj
+participant "cfg : ConfiguracionSistema" as Cfg <<singleton>>
+participant "cred : CredencialAPI" as Cred
+participant "sDeuda : ServicioDeuda" as SDeuda <<control>>
+participant "sFR : ServicioFacturacionRecurrente" as SFR <<control>>
+participant "s : Suscripcion" as Sus
+participant "sAud : ServicioAuditoria" as SAud <<control>>
+
+' =====================================================================
+' 1. PANEL FINANCIERO CON FILTROS (CU-704)
+' =====================================================================
+== Consultar panel financiero con filtros (CU-704) ==
+
+User -> Panel : obtenerMetricas(actor, desde, hasta)
+activate Panel
+
+' El usuario operativo no puede ver el panel global (CU-112)
+Panel -> SAuth : autorizar(actor, "VER_PANEL_FINANCIERO")
+activate SAuth
+SAuth --> Panel
+deactivate SAuth
+
+' Los filtros (país, sector, moneda, tipo de factura) viajan como criterios
+Panel -> Busc : buscarFacturas(actor, criterios)
+activate Busc
+Busc --> Panel : facturas : List<Factura>
+deactivate Busc
+
+alt facturas está vacía (filtros incompatibles o sin datos)
+    note right of Panel
+      Se muestra el panel con métricas a cero y
+      el aviso "No hay datos para estos filtros",
+      sin exponer datos inconsistentes.
+    end note
+    Panel --> User : MetricasFinancieras vacías
+
+else hay datos
+    create participant "m : MetricasFinancieras" as Met
+    Panel -> Met : <<create>>(totalFacturado, totalCobrado,\npendienteCobro, saldoVencido, tiempoMedioCobroDias)
+
+    Panel -> Panel : previsionIngresos(actor, mes)
+
+    Panel -> Obj : porcentajeAlcanzado()
+    activate Obj
+    Obj --> Panel : porcentaje : Decimal
+    deactivate Obj
+
+    Panel --> User : m : MetricasFinancieras (con objetivos y previsión)
+end
+
+deactivate Panel
+
+' =====================================================================
+' 2. GENERAR Y EXPORTAR INFORMES (CU-707)
+' =====================================================================
+== Generar y exportar informes (CU-707) ==
+
+User -> SInf : generarInforme(actor, filtros, formato)
+activate SInf
+
+SInf -> SAuth : autorizar(actor, "GENERAR_INFORMES")
+activate SAuth
+SAuth --> SInf
+deactivate SAuth
+
+create participant "inf : Informe" as Inf
+SInf -> Inf : <<create>>(tipo, filtros, formato)
+
+SInf -> Inf : generar()
+activate Inf
+note right of Inf
+  Recopila facturas, rectificativas y cobros del
+  periodo. Si se pide un TipoCambio, convierte a la
+  moneda base solo para la vista del informe: el
+  importe legal original no se modifica.
+end note
+Inf --> SInf
+deactivate Inf
+
+opt el periodo no tiene datos
+    note right of SInf
+      Se informa de que el periodo está vacío y el
+      administrador decide generarlo igualmente o cancelar.
+    end note
+end
+
+SInf -> Inf : exportar()
+activate Inf
+Inf --> SInf : archivo : Adjunto
+deactivate Inf
+
+alt fallo en la exportación
+    note right of SInf
+      No se registra ninguna versión falsa ni se
+      altera la información fiscal.
+    end note
+    SInf --> User : Error("No se pudo generar el informe")
+else exportación correcta
+    SInf -> SAud : registrar(actor, "GENERAR_INFORME", "Informe", inf.id, periodo + version)
+    activate SAud
+    SAud --> SInf : registro : RegistroAuditoria
+    deactivate SAud
+    SInf --> User : inf : Informe (archivo PDF/CSV para descargar)
+end
+
+deactivate SInf
+
+' =====================================================================
+' 3. CAMBIOS GLOBALES AUDITADOS (CU-710)
+' =====================================================================
+== Configurar parámetros globales (CU-710) ==
+
+User -> SCfg : modificarParametros(actor, cfg)
+activate SCfg
+
+' Reservado al Superadministrador (permiso distinto al de datos del emisor)
+SCfg -> SAuth : autorizar(actor, "CONFIGURAR_PARAMETROS_GLOBALES")
+activate SAuth
+SAuth --> SCfg
+deactivate SAuth
+
+SCfg -> Cfg : validar()
+activate Cfg
+Cfg --> SCfg : errores : List<String>
+deactivate Cfg
+
+alt errores no está vacía
+    note right of SCfg : Se mantiene la configuración previa
+    SCfg --> User : ErrorValidacion(errores)
+
+else configuración válida
+    note right of Cfg
+      Plazo de pago, cadencia de impagos, dominio de
+      correo, umbrales, monedas... Se aplican a los
+      nuevos flujos; las facturas ya emitidas NO se
+      reescriben de forma retroactiva.
+    end note
+
+    SCfg -> SAud : registrar(actor, "MODIFICAR_PARAMETROS", "ConfiguracionSistema", cfg.id, valorAnterior + " -> " + valorNuevo)
+    activate SAud
+    SAud --> SCfg : registro : RegistroAuditoria
+    deactivate SAud
+
+    SCfg --> User : Configuración global actualizada
+end
+
+deactivate SCfg
+
+' =====================================================================
+' 4. CONSULTA DE DEUDA VÍA API EXTERNA (CU-711): 401 / 429 / 200
+' =====================================================================
+== Consultar deudas vía API (CU-711) ==
+
+ApiCli -> API : consultarDeuda(idCliente, clave)
+activate API
+
+' Credenciales independientes de las de los usuarios
+API -> Cred : validar(clave)
+activate Cred
+Cred --> API : valida : boolean
+deactivate Cred
+
+alt valida == false
+    API --> ApiCli : HTTP 401 Unauthorized
+
+else credencial válida
+    API -> API : superaLimite(cred.limitePeticionesMinuto)
+
+    alt límite de peticiones excedido (rate limiting)
+        API --> ApiCli : HTTP 429 Too Many Requests\n(Retry-After: segundos de espera)
+
+    else dentro del límite
+        ' Mismas reglas de negocio que la interfaz visual
+        API -> API : buscarCliente(idCliente)
+        API -> SDeuda : calcularDeuda(c)
+        activate SDeuda
+        SDeuda --> API : estado : EstadoDeuda
+        deactivate SDeuda
+
+        API -> SAud : registrar(null, "CONSULTA_API_DEUDA", "Cliente", idCliente, cred.id)
+        activate SAud
+        SAud --> API : registro : RegistroAuditoria
+        deactivate SAud
+
+        API --> ApiCli : HTTP 200 OK\nestado : EstadoDeuda (JSON)
+    end
+end
+
+note right of API
+  En los errores 401 y 429 no se expone
+  ninguna información financiera.
+end note
+
+deactivate API
+
+' =====================================================================
+' 5. EJECUCIÓN RESILIENTE EN SEGUNDO PLANO (CU-713)
+' =====================================================================
+== Ejecutar procesos en segundo plano (CU-713) ==
+
+Timer -> Plan : ejecutarGeneracionMensual()
+activate Plan
+
+Plan -> SFR : generarFacturasMensuales(fecha)
+activate SFR
+
+create participant "exec : EjecucionProceso" as Exec
+SFR -> Exec : <<create>>("FACTURACION_MENSUAL")
+note right of Exec : Estado -> PROCESANDO\n(visible en consultarEstadoSistema)
+
+SFR -> SFR : suscripcionesActivas(fecha)
+
+loop para cada suscripción s del lote
+    SFR -> Sus : generarFacturaMensual(mes)
+    activate Sus
+
+    alt se genera correctamente
+        Sus --> SFR : f : Factura
+        note right of Exec : procesados++
+    else error en el elemento (p. ej. datos fiscales incompletos)
+        Sus --> SFR : excepción
+        SFR -> Exec : registrarError(s.id, motivo)
+        activate Exec
+        note right of Exec
+          Se captura la excepción, se marca solo ese
+          elemento como fallido (fallidos++) y se
+          continúa con el siguiente del lote.
+        end note
+        Exec --> SFR
+        deactivate Exec
+    end
+    deactivate Sus
+end
+
+note right of Exec
+  Cierra con COMPLETADO o COMPLETADO_CON_ERRORES
+  y guarda el resumen: procesados, fallidos y motivos.
+end note
+SFR --> Plan : exec : EjecucionProceso
+deactivate SFR
+
+deactivate Plan
+@enduml

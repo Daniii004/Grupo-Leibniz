@@ -1,0 +1,266 @@
+@startuml Secuencia_A2_AltaClienteContactosEstado
+title Diagrama de secuencia: Alta de cliente, gestión de contactos y cambio de estado (CU-201, CU-203, CU-204, CU-205, CU-206)
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "actor : Usuario" as User
+participant "sC : ServicioClientes" as SC <<control>>
+participant "sAuth : ServicioAutorizacion" as SAuth <<control>>
+participant "df : DatosFiscales" as DF
+participant "p : PersonaContacto" as P
+participant "sAud : ServicioAuditoria" as SAud <<control>>
+
+' =====================================================================
+' 1. ALTA DE CLIENTE (CU-201)
+' =====================================================================
+== Alta de cliente (CU-201) ==
+
+User -> SC : darDeAlta(actor, comerciales, df)
+activate SC
+
+SC -> SAuth : autorizar(actor, "ALTA_CLIENTE")
+activate SAuth
+SAuth --> SC
+deactivate SAuth
+
+' Datos comerciales y fiscales van separados (DatosComerciales / DatosFiscales)
+SC -> DF : estanCompletos()
+activate DF
+note right of DF
+  Razón social, identificador fiscal, domicilio,
+  país, idioma y moneda. El NIF y el domicilio no
+  se atan al formato español: para clientes
+  extranjeros se aceptan otros formatos y no se
+  exige, por ejemplo, la provincia.
+end note
+DF --> SC : completos : boolean
+deactivate DF
+
+alt completos == false
+    SC --> User : ErrorValidacion(camposObligatoriosFaltantes)
+
+else datos completos
+    SC -> SC : buscarPorNIF(df.identificadorFiscal)
+
+    alt el NIF ya existe en otro cliente
+        note right of SC
+          No se crea ningún cliente. Se indica el
+          cliente que ya tiene ese NIF y se sugiere
+          fusionar duplicados si procede (CU-207).
+        end note
+        SC --> User : Error("NIF ya registrado en el cliente existente")
+
+    else NIF no registrado
+        create participant "c : Cliente" as Cli
+        SC -> Cli : <<create>>(comerciales, df, moneda)
+        note right of Cli : Estado -> PENDIENTE_ACTIVACION
+
+        create participant "ev : EventoHistorial" as Ev
+        SC -> Ev : <<create>>(c, "ALTA", descripcion)
+
+        SC -> SAud : registrar(actor, "ALTA_CLIENTE", "Cliente", c.id, detalle)
+        activate SAud
+        SAud --> SC : registro : RegistroAuditoria
+        deactivate SAud
+
+        note right of SC
+          Se ofrece asignar el cliente a un usuario
+          (CU-106) y registrar sus contactos (CU-203).
+        end note
+        SC --> User : c : Cliente
+    end
+end
+
+deactivate SC
+
+' =====================================================================
+' 2. GESTIONAR PERSONAS DE CONTACTO (CU-203)
+' =====================================================================
+== Gestionar personas de contacto (CU-203) ==
+
+User -> SC : gestionarContacto(actor, c, p, rol)
+activate SC
+
+' Con cliente: un usuario operativo solo puede actuar sobre sus clientes asignados
+SC -> SAuth : autorizar(actor, "GESTIONAR_CONTACTOS", c)
+activate SAuth
+SAuth --> SC
+deactivate SAuth
+
+SC -> SC : validarDatosContacto(p)
+
+alt correo o teléfono no válidos
+    SC --> User : ErrorValidacion(errores)
+
+else datos válidos
+    SC -> SC : buscarContactoExistente(p.email)
+
+    alt la persona ya está asociada a otra empresa cliente
+        note right of SC
+          Se reutiliza el mismo PersonaContacto
+          (sin duplicarlo) y se asocia también a c.
+        end note
+    else persona nueva
+        note right of P : Se guarda la nueva PersonaContacto\ncon sus canales (EMAIL, TELEFONO, WHATSAPP)
+    end
+
+    create participant "v : VinculoContacto" as V
+    SC -> V : <<create>>(c, p, rol)
+
+    opt rol == FACTURACION o rol == COBROS
+        note right of V
+          El contacto pasa a ser destinatario de
+          las facturas / avisos de cobro de c.
+        end note
+    end
+
+    SC -> Ev : <<create>>(c, "CONTACTO_ACTUALIZADO", descripcion)
+    SC -> SAud : registrar(actor, "GESTIONAR_CONTACTO", "Cliente", c.id, detalle)
+    activate SAud
+    SAud --> SC : registro : RegistroAuditoria
+    deactivate SAud
+
+    SC --> User : Contacto guardado
+end
+
+deactivate SC
+
+' =====================================================================
+' 3. DESACTIVAR CONTACTO (CU-204) con aviso de único contacto (CU-205)
+' =====================================================================
+== Desactivar contacto (CU-204) y aviso de único contacto de facturación (CU-205) ==
+
+User -> SC : desactivarContacto(actor, c, p)
+activate SC
+
+SC -> SAuth : autorizar(actor, "DESACTIVAR_CONTACTO", c)
+activate SAuth
+SAuth --> SC
+deactivate SAuth
+
+SC -> Cli : getContactosFacturacion()
+activate Cli
+Cli --> SC : contactos : List<PersonaContacto>
+deactivate Cli
+
+alt contactos contiene solo a p y c.estado == ACTIVO (CU-205, extiende CU-204)
+    SC --> User : avisos : List<String>\n("El cliente quedará sin destinatario para sus facturas")
+
+    alt el administrador designa antes otro contacto de facturación
+        note right of SC
+          Se cancela la desactivación sin cambios y
+          se lleva al administrador a CU-203.
+        end note
+        SC --> User : Desactivación cancelada
+    else el administrador confirma de forma explícita
+        note right of SC : Se retoma CU-204
+    end
+end
+
+opt desactivación confirmada
+    alt p está asociado a otras empresas cliente
+        note right of V
+          Solo se desactiva el vínculo con c
+          (v.activo = false); se mantienen
+          sus relaciones con otras empresas.
+        end note
+    else p solo está asociado a c
+        SC -> P : desactivar()
+        activate P
+        P --> SC
+        deactivate P
+    end
+
+    note right of SC
+      No se borra el contacto: se conservan sus datos
+      y el historial de envíos de facturas a sus
+      direcciones (RNF-09). Deja de recibir envíos.
+    end note
+
+    SC -> Ev : <<create>>(c, "CONTACTO_DESACTIVADO", descripcion)
+    SC -> SAud : registrar(actor, "DESACTIVAR_CONTACTO", "PersonaContacto", p.id, detalle)
+    activate SAud
+    SAud --> SC : registro : RegistroAuditoria
+    deactivate SAud
+
+    SC --> User : Contacto desactivado
+end
+
+deactivate SC
+
+' =====================================================================
+' 4. CAMBIO DE ESTADO DEL CLIENTE (CU-206)
+' =====================================================================
+== Gestionar el estado del cliente (CU-206) ==
+
+User -> SC : cambiarEstado(actor, c, nuevo)
+activate SC
+
+SC -> SAuth : autorizar(actor, "CAMBIAR_ESTADO_CLIENTE", c)
+activate SAuth
+SAuth --> SC
+deactivate SAuth
+
+note right of SC
+  Solo se ofrecen los estados permitidos desde el actual:
+  PENDIENTE_ACTIVACION, ACTIVO, PAUSADO,
+  BAJA_SOLICITADA, BAJA, BLOQUEADO
+end note
+
+opt nuevo == ACTIVO y el cliente viene de BAJA / BLOQUEADO (reactivación)
+    SC -> SC : buscarPorNIF(c.datosFiscales.identificadorFiscal)
+end
+
+alt reactivación y el NIF ya existe en otro cliente
+    SC --> User : Error("NIF duplicado en el cliente coincidente")
+
+else NIF válido
+    opt nuevo == ACTIVO (activa la facturación recurrente)
+        SC -> Cli : tieneDatosFiscalesCompletos()
+        activate Cli
+        Cli --> SC : completos : boolean
+        deactivate Cli
+    end
+
+    alt nuevo == ACTIVO y completos == false
+        SC -> Cli : datosFiscalesFaltantes()
+        activate Cli
+        Cli --> SC : faltantes : List<String>
+        deactivate Cli
+        note right of SC
+          Se bloquea la activación de la recurrencia.
+          Si se completan los datos (CU-202) se vuelve
+          a validar el cambio.
+        end note
+        SC --> User : ErrorValidacion(faltantes)
+
+    else condiciones cumplidas (o el nuevo estado no es ACTIVO)
+        SC -> Cli : consecuenciasCambioEstado(nuevo)
+        activate Cli
+        Cli --> SC : consecuencias : List<String>
+        deactivate Cli
+        SC --> User : consecuencias\n(p. ej. se dejarán de generar facturas o recordatorios)
+
+        alt el administrador confirma
+            SC -> Cli : cambiarEstado(nuevo)
+            activate Cli
+            Cli --> SC
+            deactivate Cli
+
+            SC -> Ev : <<create>>(c, "CAMBIO_ESTADO", anterior + " -> " + nuevo)
+            SC -> SAud : registrar(actor, "CAMBIAR_ESTADO_CLIENTE", "Cliente", c.id, detalle)
+            activate SAud
+            SAud --> SC : registro : RegistroAuditoria
+            deactivate SAud
+
+            SC --> User : Estado del cliente actualizado
+        else el administrador cancela
+            note right of SC : El cliente conserva su estado
+        end
+    end
+end
+
+deactivate SC
+@enduml
