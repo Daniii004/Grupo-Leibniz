@@ -1,5 +1,5 @@
 @startuml Secuencia_Tarifas
-title Diagrama de secuencia: Revisión anual de tarifas y aprobación de cambios (CU-307..310)
+title Diagrama de secuencia: Revisión anual de tarifas y aprobación de cambios (CU-307, CU-308, CU-309, CU-310)
 
 autonumber
 skinparam shadowing false
@@ -23,11 +23,15 @@ participant ServicioAuditoria as SA
 Temp -> SR : iniciarRevisionAnual()
 activate SR 
 SR -> Cliente : obtenerClientesConSuscripciónActiva()
+activate Cliente
 Cliente --> SR : listaClientes
+deactivate Cliente
 
 loop Para cada cliente pendiente de revisión
    SR -> Cliente : obtenerResponsable()
+   activate Cliente
    Cliente --> SR : responsable
+   deactivate Cliente
    SR -> SR : crearRevisiónPendiente(cliente, responsable)
    SR -> SN : avisarRevisionPendiente(responsable)
 end
@@ -44,7 +48,9 @@ deactivate SR
 User -> SR : seleccionarrevision(idCliente)
 activate SR
 SR -> Cliente : obtenerDatosActuales()
+activate Cliente
 Cliente --> SR : rangoActual, tarifaActual
+deactivate Cliente
 SR -> User : Mostrar datos y revisión pendiente
 deactivate SR
 
@@ -55,7 +61,9 @@ alt Dato de facturación no disponible
    SR --> User : Revisión pendiente de completar
 else Dato de facturación disponible
    SR -> ST : compararConTablaRangos(importe)
+   activate ST
    ST --> SR : rangoPropuesto, tarifaPropuesta
+   deactivate ST
 
    alt El rango no cambia
     SR -> SR : completarRevision()
@@ -66,6 +74,7 @@ else Dato de facturación disponible
     SR -> SR : crearPropuestaCambioTarifa()
     SR -> SN : avisarAprobador(propuesta)
     SR --> User : Propuesta pendiente de aprobación
+    deactivate SR
    end
 end
 deactivate SR
@@ -105,6 +114,7 @@ else El aprobador es distinto del registrador
     SR -> SA : registrarEvento("Rechazo de tarifa")
     SR -> SN : notificarRechazo(responsable, motivo)
     SR --> Admin : Propuesta rechazada
+    deactivate SR
    end
 end
 deactivate SR
@@ -143,6 +153,7 @@ else Tabla válida
    else SuperAdmin cancela
     SuperAdmin -> ST : cancelarCambios()
     ST --> SuperAdmin : Operación cancelada
+    deactivate ST
     note right of ST
      Se mantiene la tabla vigente
      sin modificaciones.
