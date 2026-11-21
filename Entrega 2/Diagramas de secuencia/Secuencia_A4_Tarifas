@@ -1,0 +1,154 @@
+@startuml Secuencia_Tarifas
+title Diagrama de secuencia: Revisión anual de tarifas y aprobación de cambios (CU-307..310)
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor "Temporizador del Sistema" as Temp
+actor "Usuario (responsable)" as User
+actor Administrador as Admin
+actor Superadministrador as SuperAdmin
+
+participant ServicioRevisiones as SR
+participant ServicioTarifas as ST
+participant ServicioNotificaciones as SN
+participant Cliente as Cliente
+participant Suscripción as Sub
+participant ServicioHistorial as SH
+participant ServicioAuditoria as SA
+
+== Preparar revisión anual de tarifas (CU-307) ==
+
+Temp -> SR : iniciarRevisionAnual()
+activate SR 
+SR -> Cliente : obtenerClientesConSuscripciónActiva()
+Cliente --> SR : listaClientes
+
+loop Para cada cliente pendiente de revisión
+   SR -> Cliente : obtenerResponsable()
+   Cliente --> SR : responsable
+   SR -> SR : crearRevisiónPendiente(cliente, responsable)
+   SR -> SN : avisarRevisionPendiente(responsable)
+end
+
+opt No hay clientes que revisar
+   SR -> SR : registrarEjecuciónSinRevisiones()
+end
+
+SR -> SA : registrarEjecución(númeroRevisiones)
+deactivate SR
+
+== Registrar facturación anual del cliente (CU-308) ==
+
+User -> SR : seleccionarrevision(idCliente)
+activate SR
+SR -> Cliente : obtenerDatosActuales()
+Cliente --> SR : rangoActual, tarifaActual
+SR -> User : Mostrar datos y revisión pendiente
+deactivate SR
+
+User -> SR : registrarFacturaciónAnual(importe, fuente, fecha)
+activate SR
+
+alt Dato de facturación no disponible
+   SR --> User : Revisión pendiente de completar
+else Dato de facturación disponible
+   SR -> ST : compararConTablaRangos(importe)
+   ST --> SR : rangoPropuesto, tarifaPropuesta
+
+   alt El rango no cambia
+    SR -> SR : completarRevision()
+    SR -> SH : registrarRevisionSinCambios()
+    SR -> User : Revisión completada
+
+   else El rango cambia
+    SR -> SR : crearPropuestaCambioTarifa()
+    SR -> SN : avisarAprobador(propuesta)
+    SR --> User : Propuesta pendiente de aprobación
+   end
+end
+deactivate SR
+
+== Aprobar cambio de tarifa (CU-309) ==
+
+Admin -> SR : consultarPropuestaPendiente(idPropuesta)
+activate SR
+SR -> SR : obtenerDatosPropuesta()
+SR --> Admin : facturación, fuente, fecha, rango y tarifas
+
+alt El aprobador registró el dato de facturación
+   SR --> Admin : Error("Debe aprobarlo otro administrador")
+   note right of SR
+    Se mantiene la propuesta pendiente
+    hasta que la revise otro aprobador
+   end note
+
+else El aprobador es distinto del registrador
+   alt El administrador aprueba
+    Admin -> SR : aprobarPropuesta(fechaEfecto)
+    SR -> Sub : aplicarNuevaTarifa(tarifaPropuesta, fechaefecto)
+    SR -> SH : registrarCambioTarifa(tarifaAnterior, tarifaNueva)
+    SR -> SA : registrarAprobación(aprobador, fecha)
+    SR -> SN : notificarResolución(responsable)
+    SR --> Admin : Cambio de tarifa aprobado
+
+    note right of Sub
+     La nueva tarifa se aplica desde 
+     la fecha de efecto.
+     Las facturas emitidas no cambian.
+    end note
+   
+   else El administrador rechaza
+    Admin -> SR : rechazarPropuesta(motivo)
+    SR -> SH : registrarRechazo(motivo)
+    SR -> SA : registrarEvento("Rechazo de tarifa")
+    SR -> SN : notificarRechazo(responsable, motivo)
+    SR --> Admin : Propuesta rechazada
+   end
+end
+deactivate SR
+
+== Configurar tabla de tarifas por rangos (CU-310) ==
+
+SuperAdmin -> ST : solicitarConfiguraciónTarifas()
+activate ST
+ST -> SuperAdmin : Mostrar tabla vigente
+
+SuperAdmin -> ST : modificarRangosYPrecios(datos, fechaEfecto)
+ST -> ST : validarTablaTarifas()
+
+alt Tabla no válida
+   ST --> SuperAdmin : Error("La tabla de tarifas no es válida")
+   note right of ST
+    Se indican los errores,
+    por ejemplo, rangos solapados.
+    No se guarda ningún cambio.
+   end note
+
+else Tabla válida
+   ST --> SuperAdmin : Mostrar resumen de cambios
+
+   alt SuperAdmin confirma
+    SuperAdmin -> ST : confirmarCambios()
+    ST -> ST : guardarNuevaVersión(fechaEfecto)
+    ST -> SA : registrarEvento("Cambio de tabla de tarifas")
+    ST --> SuperAdmin : Nueva tabla guardada
+
+    note right of ST
+     Se conserva la versión anterior.
+     Las facturas ya emitidas no cambian.
+    end note
+
+   else SuperAdmin cancela
+    SuperAdmin -> ST : cancelarCambios()
+    ST --> SuperAdmin : Operación cancelada
+    note right of ST
+     Se mantiene la tabla vigente
+     sin modificaciones.
+    end note
+   end
+end
+
+deactivate ST
+@enduml
