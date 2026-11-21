@@ -1,0 +1,168 @@
+@startuml Secuencia_Rectificativas_Y_Periodos
+title Diagrama: Rectificativas y gestión de periodos administrativos (CU-409, CU-410)
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor Usuario as User
+actor Administrador as Admin
+
+participant ServicioFacturacion as SF
+participant ServicioPeriodos as SP
+participant FacturaOriginal as FO
+participant ServicioSeries as SR
+participant ServicioAprobaciones as SAP
+participant ServicioDocumentos as SD
+participant ServicioAuditoria as SA
+participant ServicioNotificaciones as SN
+participant FacturaRectificativa as FR
+
+== Emitir factura rectificativa (CU-409) ==
+
+User -> SF : solicitarFacturaRectificativa(idFacturaOriginal)
+activate SF
+
+SF -> FO : consultarFacturaOriginal(idFacturaOriginal)
+activate FO
+FO --> SF : datosFacturaOriginalYEstado
+deactivate FO
+
+SF -> SP : consultarEstadoPeriodo(fechaFactura)
+activate SP
+SP --> SF : estadoPeriodo
+deactivate SP
+
+alt Factura original inexistente o no emitida
+    SF -> SN : notificarFacturaOriginalNoValida()
+    SF -> SA : registrarSolicitudRectificativaRechazada(idFacturaOriginal)
+    SF --> User : Informar rechazo de solicitud
+
+else Periodo administrativo cerrado
+    SF -> SN : notificarPeriodoCerrado()
+    SF -> SA : registrarBloqueoPorPeriodoCerrado(idFacturaOriginal)
+    SF --> User : Informar que no se puede rectificar
+
+else Factura original válida y periodo abierto
+    User -> SF : indicarMotivoYDatosRectificacion(motivo, importes)
+    SF -> SF : validarMotivoYDatosRectificacion()
+
+    alt Datos de rectificación incorrectos
+        SF -> SN : notificarDatosRectificacionIncorrectos()
+        SF --> User : Solicitar corrección de datos
+
+    else Datos de rectificación correctos
+        SF -> SF : calcularDiferenciaYNuevaDeuda()
+        SF -> SF : comprobarUmbralDeAprobacion()
+
+        alt Rectificación requiere aprobación
+            SF -> SAP : solicitarAprobacionRectificativa(datosRectificacion)
+            activate SAP
+            SAP --> SF : solicitudPendiente
+            deactivate SAP
+
+            SF -> SA : registrarRectificativaPendienteAprobacion(idFacturaOriginal)
+            SF -> SN : notificarPendienteAprobacion()
+            SF --> User : Informar que la rectificativa está pendiente
+
+        else Rectificación autorizada sin aprobación adicional
+            SF -> SR : asignarSerieEspecialYNumero()
+            activate SR
+
+            alt Error de numeración o serie no disponible
+                SR --> SF : Error de numeración
+                SF -> SA : registrarErrorNumeracionRectificativa(idFacturaOriginal)
+                SF -> SN : notificarErrorEmisionRectificativa()
+                SF --> User : Informar que no se pudo emitir la rectificativa
+
+            else Número asignado correctamente
+                SR --> SF : serieEspecialYNumero
+                deactivate SR
+
+                SF -> FR : crearFacturaRectificativa(datos, serie, numero)
+                activate FR
+                FR --> SF : facturaRectificativaCreada
+                deactivate FR
+
+                SF -> FR : vincularConFacturaOriginal(idFacturaOriginal)
+                SF -> FO : marcarComoRectificada()
+                SF -> FO : actualizarEstadoFacturaOriginal()
+
+                SF -> SF : recalcularDeudaCliente()
+                SF -> SD : generarYGuardarPDF(idFacturaRectificativa)
+                activate SD
+
+                alt Error al generar o guardar PDF
+                    SD --> SF : Error de documento
+                    SF -> SA : registrarFalloPDFRectificativa(idFacturaRectificativa)
+                    SF -> SD : programarReintentoPDF(idFacturaRectificativa)
+
+                else PDF generado y guardado
+                    SD --> SF : PDF almacenado
+                    deactivate SD
+                    SF -> SA : registrarFacturaRectificativaEmitida(idFacturaRectificativa)
+                end
+
+                SF -> SN : notificarEmisionRectificativa(idFacturaRectificativa)
+                SF --> User : Confirmar emisión de factura rectificativa
+                deactivate SF
+            end
+        end
+    end
+end
+
+
+== Gestionar periodos administrativos (CU-410) ==
+
+Admin -> SP : solicitarGestionPeriodo(idPeriodo, accion)
+activate SP
+
+SP -> SP : consultarEstadoActualPeriodo(idPeriodo)
+
+alt Solicitar cierre de periodo
+    SP -> SP : comprobarCondicionesDeCierre()
+
+    alt Existen operaciones pendientes que impiden el cierre
+        SP -> SN : notificarIncidenciasDeCierre(idPeriodo)
+        SP -> SA : registrarIntentoCierreRechazado(idPeriodo)
+        SP --> Admin : Informar que no se puede cerrar el periodo
+
+    else Periodo preparado para cierre
+        SP -> SP : marcarPeriodoComoCerrado(idPeriodo)
+        SP -> SA : registrarCierrePeriodo(idPeriodo, administrador)
+        SP -> SN : notificarPeriodoCerrado(idPeriodo)
+        SP --> Admin : Confirmar cierre del periodo
+    end
+
+else Solicitar reapertura de periodo
+    Admin -> SP : indicarMotivoReapertura(motivo)
+    SP -> SP : comprobarPermisoSuperior(administrador)
+
+    alt Usuario sin permiso suficiente
+        SP -> SA : registrarReaperturaRechazada(idPeriodo, administrador)
+        SP -> SN : notificarReaperturaNoAutorizada()
+        SP --> Admin : Informar falta de permisos
+
+    else Usuario autorizado
+        SP -> SP : validarMotivoReapertura(motivo)
+
+        alt Motivo no válido o incompleto
+            SP -> SN : notificarMotivoReaperturaInvalido()
+            SP --> Admin : Solicitar un motivo válido
+
+        else Motivo válido
+            SP -> SP : marcarPeriodoComoAbierto(idPeriodo)
+            SP -> SA : registrarReaperturaPeriodo(idPeriodo, administrador, motivo)
+            SP -> SN : notificarPeriodoReabierto(idPeriodo)
+            SP --> Admin : Confirmar reapertura del periodo
+        end
+    end
+
+else Cancelar operación
+    SP -> SP : mantenerEstadoActualPeriodo(idPeriodo)
+    SP -> SA : registrarCancelacionGestionPeriodo(idPeriodo)
+    SP --> Admin : Confirmar cancelación sin cambios
+    deactivate SP
+end
+
+@enduml
