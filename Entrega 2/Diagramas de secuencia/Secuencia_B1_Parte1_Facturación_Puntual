@@ -1,0 +1,198 @@
+@startuml Secuencia_Facturación_Puntual
+title Diagrama de secuencia: Presupuesto a factura puntual, validación y emisión documental (CU-401, CU-402, CU-407) - [Parte 1]
+
+autonumber
+skinparam shadowing false
+skinparam sequenceMessageAlign center
+
+actor Usuario as User
+
+participant ServicioPresupuestos as SP
+participant Presupuesto as P
+participant ServicioFacturacion as SF
+participant Cliente as C
+participant Factura as F
+participant ServicioValidaciones as SV
+participant ServicioSeries as SS
+participant ServicioDocumentos as SD
+participant ServicioAuditoria as SA
+participant ServicioNotificaciones as SN
+
+== Gestionar presupuesto (CU-401) ==
+
+User -> SP : crearPresupuesto(idCliente)
+activate SP
+SP -> C : comprobarDatosComercialesYFiscales()
+C --> SP : datosCliente
+
+User -> SP : introducirLineas(conceptos, unidades, precios, descuentos, impuestos)
+SP -> SP : validarDatosPresupuesto()
+
+alt Datos incompletos o erróneos
+   SP --> User : Mostrar errores para corregir
+else Datos correctos
+   SP -> SP : calcularBasesImponiblesEImpuestos()
+   SP -> P : guardarPresupuesto(datos, importes)
+   P --> SP : presupuestoCreado
+   SP --> User : Presupuesto creado
+
+   User -> SP : registrarDecision(idPresupuesto)
+ 
+   alt Cliente rechaza presupuesto
+    User -> SP : rechazarPresupuesto(motivo)
+    SP -> P : actualizarEstado("Rechazado")
+    SP --> User : Presupuesto rechazado
+   else Cliente acepta presupuesto
+    User -> SP : registrarAceptacion()
+    SP -> SN : notificarPresupuestoRechazado(idPresupuesto)
+    SP --> User : solicitarEvidencia()
+
+    alt No se aporta evidencia
+     SP -> P : actualizarEstado("Pendiente de evidencia")
+     SP -> SN : notificarFaltaEvidencia(idPresupuesto)
+     SP --> User : Falta evidencia, no se puede convertir
+
+    else Evidencia aportada
+     User -> SP : adjuntarEvidencia(archivo)
+     SP -> P : vincularEvidencia(archivo)
+     SP -> P : actualizarEstado("Aceptado")
+     SP -> SA : registrarAceptacion(idPresupuesto, fecha)
+     SP -> SN : notificarPresupuestoAceptado(idPresupuesto)
+     SP --> User : Presupuesto aceptado
+     deactivate SP
+    end
+   end
+end
+
+== Crear factura puntual (CU-402) ==
+
+User -> SF : crearFacturaPuntual(idCliente)
+activate SF
+
+SF -> C : obtenerDatosComercialesYFiscales()
+C --> SF : datosCliente
+
+alt Faltan datos fiscales obligatorios
+    SF --> User : Mostrar datos fiscales pendientes
+    note right of SF
+     No se permite continuar
+     hasta completar la ficha del cliente.
+    end note
+
+else Datos fiscales disponibles
+    User -> SF : introducirLineas(conceptos, cantidades, precios, descuentos, impuestos)
+
+    loop Mientras existan líneas incompletas o erróneas
+     SF -> SF : validarLineas()
+     SF --> User : Señalar errores en las líneas
+     User -> SF : corregirLineas()
+    end
+
+    SF -> SF : validarLineas()
+    SF -> SF : calcularSubtotalesImpuestosYTotal()
+
+    alt Usuario decide guardar como borrador
+     User -> SF : guardarComoBorrador()
+     SF -> F : guardarBorrador(datosCliente, lineas, importes)
+     F --> SF : borradorGuardado
+     SF --> User : Factura guardada como borrador
+
+     note right of F
+      No se asigna número correlativo
+      ni se genera el PDF definitivo.
+     end note
+
+    else Usuario solicita previsualización
+     User -> SF : solicitarVistaPrevia()
+     SF -> SV : validarYPrevisualizar(idFactura)
+     SV --> SF : resultadoValidacion
+     SF --> User : Mostrar vista previa
+
+     opt Importe fuera de lo habitual
+      SF --> User : Mostrar advertencia de desviación
+
+      alt Usuario decide corregir
+       User -> SF : volverAEditar()
+       SF --> User : Mostrar borrador para corregir
+      else Usuario confirma el importe
+       User -> SF : confirmarImporte()
+      end
+     end
+
+     alt Condiciones especiales requieren aprobación
+      SF -> F : actualizarEstado("Pendiente de aprobación")
+      SF -> SN : notificarPendienteAprobacion(idFactura)
+      SF --> User : Factura pendiente de aprobación
+
+     else No requiere aprobación
+      User -> SF : confirmarEmision()
+      SF --> User : Continuar con la emisión
+     end
+    end
+end
+
+opt Usuario cancela la operación
+   User -> SF : cancelarOperacion()
+   SF --> User : Solicitar confirmación de cancelación
+   User -> SF : confirmarCancelacion()
+   SF -> SF : descartarCambiosNoConfirmados()
+   SF --> User : Operación cancelada
+   deactivate SF
+end
+
+
+== Validar y previsualizar factura (CU-407) ==
+
+User -> SF : solicitarValidacionYVistaPrevia(idFactura)
+activate SF
+
+SF -> SV : validarDatosFiscales(idFactura)
+activate SV
+
+SV -> C : comprobarDatosFiscalesCliente()
+C --> SV : datosFiscalesCliente
+SV -> SV : comprobarDatosFiscalesEmisor()
+
+alt Faltan datos fiscales obligatorios
+    SV --> SF : Indicar datos fiscales incompletos
+    SF --> User : Mostrar datos que faltan
+
+    note right of F
+     La factura vuelve al borrador,
+     no se asigna serie ni número.
+    end note
+
+else Datos fiscales completos
+    SV -> C : consultarHistorialFacturacion()
+    C --> SV : historialImportes
+    SV -> SV : comprobarDesviacionImporte()
+
+    alt Importe fuera de lo habitual
+     SV --> SF : Aviso de desviación detectada
+     SF --> User : Mostrar advertencia de desviación
+
+     alt Usuario confirma que el importe es correcto
+      User -> SF : confirmarImporte()
+      SF -> SV : generarVistaPrevia()
+      SV --> SF : documentoPrevisualizado
+      SF --> User : Mostrar vista previa
+
+     else Usuario decide corregir
+      User -> SF : cancelarVistaPrevia()
+      SF --> User : Volver a editar el borrador
+     end
+
+    else Importe dentro de lo habitual
+     SV -> SV : generarVistaPrevia()
+     SV --> SF : documentoPrevisualizado
+     deactivate SV
+     SF --> User : Mostrar vista previa
+    end
+
+    opt Usuario detecta errores o cancela la vista previa
+     User -> SF : cancelarVistaPrevia()
+     SF --> User : Volver a editar el borrador
+     deactivate SF
+    end
+end
+@enduml
